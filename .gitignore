@@ -1,0 +1,16 @@
+.DS_Store
+# The project file is checked in and maintained by Xcode; only per-user state is ignored.
+*.xcworkspace/
+xcuserdata/
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcuserdata/
+DerivedData/
+.build/
+.swiftpm/
+build/
+*.ipa
+*.dSYM.zip
+*.hmap
+*.xcuserstate
+Packages/*/.build/
+__pycache__/

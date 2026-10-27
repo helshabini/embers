@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Embers — Envelope Budgeting for iPhone, iPad and Mac</title>
+  <meta name="description" content="Embers is a private, open-source envelope budget for iPhone, iPad and Mac. Give every account its own currency, fold in your bank's FX fee, sync through iCloud and import your existing budget.">
+  <link rel="canonical" href="https://getembers.app/">
+  <meta name="theme-color" content="#f2f2f7">
+  <meta name="color-scheme" content="light dark">
+  <!-- Once the app is listed, this shows Safari's "Open in App Store" banner on iPhone and iPad. -->
+  <!-- <meta name="apple-itunes-app" content="app-id=0000000000"> -->
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Embers">
+  <meta property="og:title" content="Embers — Envelope Budgeting for iPhone, iPad and Mac">
+  <meta property="og:description" content="A private, open-source envelope budget with per-account currencies, iCloud sync and on-device reminders.">
+  <meta property="og:url" content="https://getembers.app/">
+  <meta property="og:image" content="https://getembers.app/assets/icon-light.png">
+  <meta property="og:image:alt" content="The Embers app icon: a tree whose leaves are flames">
+  <meta name="twitter:card" content="summary">
+
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="assets/site.css">
+
+  <script>
+    // Applied before first paint, so a returning visitor who chose dark never sees a light flash.
+    try { if (localStorage.getItem("embers-theme") === "dark") document.documentElement.setAttribute("data-theme", "dark"); } catch (e) {}
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Embers",
+    "description": "A private, open-source envelope budget for iPhone, iPad and Mac, with per-account currencies, iCloud sync and on-device reminders.",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "iOS 18, iPadOS 18, macOS 15",
+    "url": "https://getembers.app/",
+    "image": "https://getembers.app/assets/icon-light.png",
+    "license": "https://getembers.app/license.html",
+    "isAccessibleForFree": false,
+    "inLanguage": ["en", "ar", "de", "es", "fr", "pt-BR", "ja", "zh-Hans"],
+    "author": { "@type": "Person", "name": "Hazem Elshabini" }
+  }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./" aria-label="Embers home">
+        <img src="assets/favicon.png" alt="" width="32" height="32">
+        Embers
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="#features">Features</a>
+        <a href="#screenshots">Screenshots</a>
+        <a href="#your-data">Your data</a>
+        <a href="#pricing">Pricing &amp; license</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <!-- The repository is set in assets/store-links.js (EMBERS_REPO); the star count is fetched from GitHub. -->
+      <a class="gh-badge" href="https://github.com/helshabini/embers" data-repo-link aria-label="Embers on GitHub">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        <span class="gh-label">Star</span>
+        <span class="gh-count" data-stars hidden></span>
+      </a>
+      <button class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.4 14.6A8.6 8.6 0 0 1 9.4 3.6a.6.6 0 0 0-.8-.7 9.6 9.6 0 1 0 12.5 12.5.6.6 0 0 0-.7-.8Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ================= Hero ================= -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap">
+        <div>
+          <span class="eyebrow">iPhone · iPad · Mac</span>
+          <h1 id="hero-title">A budget that <span class="flame">knows where every coin is going.</span></h1>
+          <p class="lede">Embers is an envelope budget: you plan the money you already have, category by category, before you spend it. Every account can hold its own currency, your bank's foreign-exchange fee is counted for you, and everything stays in your own iCloud.</p>
+          <div class="store-buttons">
+            <!-- Placeholder: replace href with the App Store listing and remove aria-disabled and the "Soon" tag. -->
+            <a class="btn btn-primary" href="https://apps.apple.com/app/id0000000000" aria-disabled="true" data-store="ios">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10.5 18.5h3" stroke-linecap="round"/></svg>
+              <span><small>Download on the</small>App Store <span class="soon">Soon</span></span>
+            </a>
+            <!-- Placeholder: replace href with the Mac App Store listing. -->
+            <a class="btn btn-secondary" href="https://apps.apple.com/app/id0000000000?platform=mac" aria-disabled="true" data-store="mac">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4" stroke-linecap="round"/></svg>
+              <span><small>Download on the</small>Mac App Store <span class="soon">Soon</span></span>
+            </a>
+          </div>
+          <p class="fineprint">Requires iOS 18, iPadOS 18 or macOS 15. Open source under the MIT License.</p>
+        </div>
+        <div class="hero-visual">
+          <div class="phone">
+            <img class="shot-light" src="screenshots/light/plan.jpg" width="1206" height="2622" alt="The Plan screen: Ready to Assign at the top, then each category with what was assigned and what is left" fetchpriority="high">
+            <img class="shot-dark" src="screenshots/dark/plan.jpg" width="1206" height="2622" alt="The Plan screen in dark mode" loading="lazy">
+          </div>
+          <div class="phone back" aria-hidden="true">
+            <img class="shot-light" src="screenshots/light/reports.jpg" width="1206" height="2622" alt="" loading="lazy">
+            <img class="shot-dark" src="screenshots/dark/reports.jpg" width="1206" height="2622" alt="" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="wrap highlights" role="list">
+      <div class="highlight" role="listitem">
+        <div class="label">Plan</div>
+        <div class="big">Ready to Assign</div>
+        <p>One number tells you how much money is still waiting for a job. Spending never changes it — only planning does.</p>
+      </div>
+      <div class="highlight green" role="listitem">
+        <div class="label">Every currency</div>
+        <div class="big">160+ currencies</div>
+        <p>Each account in its own currency, converted into your plan's — with your bank's fee folded in.</p>
+      </div>
+      <div class="highlight dark" role="listitem">
+        <div class="label">Private</div>
+        <div class="big">No accounts. No ads.</div>
+        <p>No sign-up, no tracking, no server of ours. Your budget lives on your devices and in your iCloud.</p>
+      </div>
+    </div>
+
+    <!-- ================= Features ================= -->
+    <section id="features" aria-labelledby="features-title">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="kicker">Features</p>
+          <h2 id="features-title">Everything a careful budget needs, nothing it doesn't.</h2>
+          <p>Built for people who want to see exactly where their money stands — in more than one country, on more than one device.</p>
+        </div>
+
+        <div class="features">
+          <article class="feature wide">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h3M8 17h6"/></svg></div>
+            <h3>Envelope budgeting, done properly</h3>
+            <p>Give the money you have a purpose before you spend it. Assign to bills, everyday spending and long-term goals; see at a glance what is left in each, and move money between categories when life changes. Plan months ahead, and look back at what any past month had left.</p>
+          </article>
+
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></div>
+            <h3>Accounts in any currency</h3>
+            <p>Hold a card in euros, a salary account in dollars and cash in pounds. Type an amount in whatever you paid and Embers converts it — adding your bank's foreign-transaction fee when the currency isn't the account's own.</p>
+          </article>
+
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6.5 15h4"/></svg></div>
+            <h3>Credit cards that add up</h3>
+            <p>Spend on a card from a funded category and the money moves to the card's payment, so you always know what you owe and whether it's covered. A card in credit balances the books too.</p>
+          </article>
+
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg></div>
+            <h3>Transfers, on and off budget</h3>
+            <p>Move money between accounts in one step, even across currencies. Track investments, property or loans alongside your budget, and count money moving into them against the right category.</p>
+          </article>
+
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/></svg></div>
+            <h3>Scheduled and repeating</h3>
+            <p>Set up rent, salaries and subscriptions once. A scheduled payment waits for your approval before it counts, so a subscription you cancelled is never spent from your plan by accident.</p>
+          </article>
+
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></div>
+            <h3>Reminders that come from your device</h3>
+            <p>A nudge when a payment is due — approve or skip it right from the notification — plus warnings when a category won't cover an upcoming bill, before a card payment, and at the start and end of each month.</p>
+          </article>
+
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+            <h3>Reports worth reading</h3>
+            <p>Where your money went, what came in against what went out, and your net worth over time — with a plain-English verdict, and colours chosen to stay readable for colour-blind eyes.</p>
+          </article>
+
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></div>
+            <h3>Reconcile with your bank</h3>
+            <p>Mark entries as cleared, compare against your statement, and lock in a reconciled balance. Embers reminds you when an account hasn't been checked in a while, and a budget check points out anything that looks wrong.</p>
+          </article>
+
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M14 11h2M8 15h2M14 15h2"/></svg></div>
+            <h3>Quick to enter</h3>
+            <p>A big keypad, the account's currency picked for you, and your payees remembered. On the Mac, type a pile of receipts in a row with the keyboard alone.</p>
+          </article>
+
+          <article class="feature wide">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M6 18h6M9 14v4"/><rect x="16" y="8" width="6" height="12" rx="1.5"/></svg></div>
+            <h3>Native on iPhone, iPad and Mac</h3>
+            <p>The iPhone app is made for one hand. The Mac app is a real Mac app, not a phone app in a window: a sidebar with every account and its balance, sortable tables, amounts typed straight into the plan, an inspector beside it, and keyboard shortcuts throughout. Light and dark appearance on both.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FX ================= -->
+    <section class="alt" aria-labelledby="fx-title">
+      <div class="wrap fx">
+        <div>
+          <p class="kicker">Money across borders</p>
+          <h2 id="fx-title">Pay in euros. Budget in dollars. See the real cost.</h2>
+          <p class="section-head" style="color:var(--text-2);font-size:19px;margin:0">Banks don't just convert — they add a fee, and bill it as one line. Embers records the purchase the way your statement will show it.</p>
+          <ul class="checks">
+            <li>Every account remembers its own currency; entries default to it.</li>
+            <li>Daily rates for 160+ currencies, kept on the device so entry works offline.</li>
+            <li>A default fee for your plan, or a different one for each card.</li>
+            <li>Type the bank's actual rate when it differed — the original amount is kept, so every conversion can be checked months later.</li>
+          </ul>
+        </div>
+        <div class="fx-card" aria-label="Example: a 42.50 euro purchase on a US dollar card">
+          <div class="top">
+            <span class="ccy">EUR</span>
+            <div class="amount">€42.50</div>
+            <div>Dinner, paid on a USD card</div>
+          </div>
+          <dl>
+            <div class="row"><dt>Rate</dt><dd>1 EUR = 1.08 USD</dd></div>
+            <div class="row"><dt>Converted</dt><dd>$45.90</dd></div>
+            <div class="row"><dt>Bank fee (2.5%)</dt><dd>$1.15</dd></div>
+            <div class="row total"><dt>Recorded</dt><dd>$47.05</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Screenshots ================= -->
+    <section id="screenshots" aria-labelledby="screenshots-title">
+      <div class="wrap">
+        <div class="section-head center">
+          <p class="kicker">Screenshots</p>
+          <h2 id="screenshots-title">Have a look around.</h2>
+          <p>Shown with a sample budget. Switch the page to dark mode to see the app's dark appearance.</p>
+        </div>
+        <div class="gallery" tabindex="0" aria-label="App screenshots, scroll sideways for more">
+          <figure>
+            <div class="phone">
+              <img class="shot-light" src="screenshots/light/plan.jpg" width="1206" height="2622" alt="Plan: categories grouped into Bills, Everyday and Goals, each with assigned, spent and available amounts" loading="lazy">
+              <img class="shot-dark" src="screenshots/dark/plan.jpg" width="1206" height="2622" alt="Plan in dark mode" loading="lazy">
+            </div>
+            <figcaption>Plan<span>Every category, and what's left in it</span></figcaption>
+          </figure>
+          <figure>
+            <div class="phone">
+              <img class="shot-light" src="screenshots/light/new-transaction.jpg" width="1206" height="2622" alt="New transaction: a large keypad, the account, and a currency button" loading="lazy">
+              <img class="shot-dark" src="screenshots/dark/new-transaction.jpg" width="1206" height="2622" alt="New transaction in dark mode" loading="lazy">
+            </div>
+            <figcaption>Quick entry<span>Any currency, one keypad</span></figcaption>
+          </figure>
+          <figure>
+            <div class="phone">
+              <img class="shot-light" src="screenshots/light/transactions.jpg" width="1206" height="2622" alt="Transactions: recent purchases with their account, category and original foreign amount" loading="lazy">
+              <img class="shot-dark" src="screenshots/dark/transactions.jpg" width="1206" height="2622" alt="Transactions in dark mode" loading="lazy">
+            </div>
+            <figcaption>Transactions<span>With scheduled payments waiting above</span></figcaption>
+          </figure>
+          <figure>
+            <div class="phone">
+              <img class="shot-light" src="screenshots/light/accounts.jpg" width="1206" height="2622" alt="Accounts: checking, cash, savings, a credit card and a tracked brokerage, each tagged with its currency" loading="lazy">
+              <img class="shot-dark" src="screenshots/dark/accounts.jpg" width="1206" height="2622" alt="Accounts in dark mode" loading="lazy">
+            </div>
+            <figcaption>Accounts<span>Each in its own currency</span></figcaption>
+          </figure>
+          <figure>
+            <div class="phone">
+              <img class="shot-light" src="screenshots/light/reports.jpg" width="1206" height="2622" alt="Reports: where the money went over twelve months, broken down by category" loading="lazy">
+              <img class="shot-dark" src="screenshots/dark/reports.jpg" width="1206" height="2622" alt="Reports in dark mode" loading="lazy">
+            </div>
+            <figcaption>Where it went<span>Your top categories at a glance</span></figcaption>
+          </figure>
+          <figure>
+            <div class="phone">
+              <img class="shot-light" src="screenshots/light/net-worth.jpg" width="1206" height="2622" alt="Reports: income against spending by month, and net worth over time" loading="lazy">
+              <img class="shot-dark" src="screenshots/dark/net-worth.jpg" width="1206" height="2622" alt="Income, spending and net worth in dark mode" loading="lazy">
+            </div>
+            <figcaption>In, out and net worth<span>How the year is really going</span></figcaption>
+          </figure>
+          <figure>
+            <div class="phone">
+              <img class="shot-light" src="screenshots/light/home.jpg" width="1206" height="2622" alt="Home: Ready to Assign, net worth, and on-budget and tracking balances" loading="lazy">
+              <img class="shot-dark" src="screenshots/dark/home.jpg" width="1206" height="2622" alt="Home in dark mode" loading="lazy">
+            </div>
+            <figcaption>Home<span>Where you stand this month</span></figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Your data ================= -->
+    <section id="your-data" class="alt" aria-labelledby="data-title">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="kicker">Your data</p>
+          <h2 id="data-title">Yours, on every device. Never ours.</h2>
+          <p>There is no Embers account and no Embers server. Your budget moves between your devices through your own private iCloud.</p>
+        </div>
+        <div class="features">
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19a4.5 4.5 0 0 0 .5-9 6 6 0 0 0-11.6 1.5A3.8 3.8 0 0 0 7 19Z"/></svg></div>
+            <h3>iCloud sync</h3>
+            <p>Enter a purchase on your iPhone and it's on your Mac moments later. Two devices editing at once don't undo each other, and a new device shows its budget arriving rather than an empty one.</p>
+          </article>
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
+            <h3>Backup and restore</h3>
+            <p>Save a complete backup to iCloud Drive whenever you like, in an open, readable format you can see in the Files app. Restore it on any device — and Embers reminds you when it's been a while.</p>
+          </article>
+          <article class="feature">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7M21 3l-9 9M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg></div>
+            <h3>Import from YNAB</h3>
+            <p>Already budgeting? Bring your history with you: import a YNAB export and your accounts, categories, assignments, transfers, splits and card payments come across, with each account's currency recognised from its name.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Languages ================= -->
+    <section aria-labelledby="languages-title">
+      <div class="wrap">
+        <div class="section-head center">
+          <p class="kicker">Languages</p>
+          <h2 id="languages-title">Speaks your language.</h2>
+          <p>Embers is fully translated into eight languages, with Arabic laid out right to left. Amounts and dates follow your region's conventions.</p>
+        </div>
+        <ul class="languages">
+          <li lang="en">English</li>
+          <li lang="ar" dir="rtl">العربية<span lang="en" dir="ltr">Arabic</span></li>
+          <li lang="de">Deutsch<span lang="en">German</span></li>
+          <li lang="es">Español<span lang="en">Spanish</span></li>
+          <li lang="fr">Français<span lang="en">French</span></li>
+          <li lang="pt-BR">Português (Brasil)<span lang="en">Portuguese</span></li>
+          <li lang="ja">日本語<span lang="en">Japanese</span></li>
+          <li lang="zh-Hans">简体中文<span lang="en">Chinese</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= Pricing & license ================= -->
+    <section id="pricing" class="alt" aria-labelledby="pricing-title">
+      <div class="wrap">
+        <div class="section-head center">
+          <p class="kicker">Pricing &amp; license</p>
+          <h2 id="pricing-title">Open source, with an honest price tag.</h2>
+          <p>All of Embers' source code is public under the MIT License. The App Store version costs a little, to cover what it takes to publish an app on Apple's platforms.</p>
+        </div>
+        <div class="pricing">
+          <div class="plan-card featured">
+            <h3>App Store</h3>
+            <div class="price">Paid <small>one-time purchase</small></div>
+            <p>The easy way: ready to install on iPhone, iPad and Mac, signed, kept up to date, and syncing through iCloud out of the box.</p>
+            <ul class="checks">
+              <li>Every feature, no subscription, no in-app purchases</li>
+              <li>Automatic updates</li>
+              <li>Helps pay for the Apple Developer Program and publishing</li>
+            </ul>
+            <div class="store-buttons">
+              <a class="btn btn-primary" href="https://apps.apple.com/app/id0000000000" aria-disabled="true" data-store="ios">
+                <span><small>Download on the</small>App Store <span class="soon">Soon</span></span>
+              </a>
+              <a class="btn btn-secondary" href="https://apps.apple.com/app/id0000000000?platform=mac" aria-disabled="true" data-store="mac">
+                <span><small>Download on the</small>Mac App Store <span class="soon">Soon</span></span>
+              </a>
+            </div>
+          </div>
+          <div class="plan-card">
+            <h3>Source code</h3>
+            <div class="price">Free <small>MIT License</small></div>
+            <p>Read it, build it yourself with Xcode, learn from it, or change it. The paid listing pays for convenience, never for the code.</p>
+            <ul class="checks">
+              <li>Use, copy, modify and redistribute freely</li>
+              <li>The same code that ships in the App Store</li>
+              <li>Building it needs Xcode and your own Apple developer account</li>
+            </ul>
+            <div class="store-buttons">
+              <!-- Placeholder: the public repository. -->
+              <a class="btn btn-secondary" href="https://github.com/helshabini/embers" data-repo-link>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+                View the source
+              </a>
+              <a class="btn btn-secondary" href="license.html">Read the license</a>
+            </div>
+          </div>
+        </div>
+        <p class="license-note">The App Store price applies only to the copy distributed through the App Store. The license is the same either way.</p>
+      </div>
+    </section>
+
+    <!-- ================= FAQ ================= -->
+    <section id="faq" aria-labelledby="faq-title">
+      <div class="wrap">
+        <div class="section-head center">
+          <p class="kicker">FAQ</p>
+          <h2 id="faq-title">Questions, answered.</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>Do I need to create an account?</summary>
+            <p>No. Embers uses the Apple ID you're already signed in with to sync through your own iCloud. There's nothing to sign up for, and no password of ours to remember.</p>
+          </details>
+          <details>
+            <summary>Where is my budget stored? Can you see it?</summary>
+            <p>On your devices, and in your private iCloud database when sync is on. The developer has no server and no way to see your budget. Read the <a href="privacy.html">privacy policy</a> for the details.</p>
+          </details>
+          <details>
+            <summary>Does Embers connect to my bank?</summary>
+            <p>No. You enter transactions yourself — which is what keeps you aware of every purchase — and reconcile against your statement when you like. The only thing Embers fetches from the internet is the day's exchange rates.</p>
+          </details>
+          <details>
+            <summary>If it's open source, why does it cost money?</summary>
+            <p>Publishing on the App Store has real costs, starting with Apple's yearly developer fee. The price covers those. If you'd rather, you're free to build Embers yourself from the source code.</p>
+          </details>
+          <details>
+            <summary>Can I bring my existing budget?</summary>
+            <p>Yes. Embers imports a YNAB export, including past months, transfers, split transactions and credit cards. You can also restore any backup made by Embers itself.</p>
+          </details>
+          <details>
+            <summary>Does one purchase cover iPhone, iPad and Mac?</summary>
+            <p>Embers runs on iPhone, iPad and Mac, and syncs between them through iCloud. Purchase details will be confirmed here when the App Store listing goes live.</p>
+          </details>
+          <details>
+            <summary>How do I get help or report a problem?</summary>
+            <p>See the <a href="support.html">support page</a>.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CTA ================= -->
+    <section aria-labelledby="cta-title" style="padding-top:0">
+      <div class="wrap">
+        <div class="cta">
+          <img src="assets/icon-light.webp" alt="" width="88" height="88" loading="lazy">
+          <h2 id="cta-title">Give your money a plan.</h2>
+          <p>Embers is coming to the App Store for iPhone, iPad and Mac.</p>
+          <div class="store-buttons">
+            <a class="btn btn-secondary" href="https://apps.apple.com/app/id0000000000" aria-disabled="true" data-store="ios">
+              <span><small>Download on the</small>App Store <span class="soon">Soon</span></span>
+            </a>
+            <a class="btn btn-secondary" href="https://apps.apple.com/app/id0000000000?platform=mac" aria-disabled="true" data-store="mac">
+              <span><small>Download on the</small>Mac App Store <span class="soon">Soon</span></span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 Hazem Elshabini. Embers is open source under the MIT License.</span>
+      <nav aria-label="Footer">
+        <a href="privacy.html">Privacy</a>
+        <a href="license.html">License</a>
+        <a href="support.html">Support</a>
+        <a href="https://github.com/helshabini/embers" data-repo-link>Source code</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="assets/theme.js" defer></script>
+  <script src="assets/store-links.js" defer></script>
+</body>
+</html>
