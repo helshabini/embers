@@ -30,6 +30,9 @@ final class StoreLoader {
 
     func load() {
         if case .ready = state { return }
+        #if DEBUG
+        CloudKitSchema.runIfRequested()
+        #endif
         // Before anything opens it: once open, iCloud holds the files.
         CloudSync.setAsideLocalCopyIfRequested()
         do {

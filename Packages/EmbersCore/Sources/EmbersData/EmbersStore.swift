@@ -7,7 +7,8 @@ import SwiftData
 /// Syncing through CloudKit's private database is what makes a new phone pick the budget up on its
 /// own, with no account to create and no server to run.
 public enum EmbersStore {
-    public static let schema = Schema([
+    /// Every model the store holds, in one place for the schema and for `CloudKitSchema`.
+    public static let modelTypes: [any PersistentModel.Type] = [
         PlanSettings.self,
         Account.self,
         Payee.self,
@@ -17,7 +18,9 @@ public enum EmbersStore {
         LedgerTransaction.self,
         ExchangeRateSnapshot.self,
         BackupRecord.self,
-    ])
+    ]
+
+    public static let schema = Schema(modelTypes)
 
     /// - Parameter cloudKitContainerIdentifier: The iCloud container, e.g.
     ///   `iCloud.com.helshabini.Embers`. Pass nil for a local-only store.
