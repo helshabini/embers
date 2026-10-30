@@ -20,12 +20,14 @@ final class ScreenCatalogUITests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments += ["-skip-splash", "-reset-ui-state", "-no-cloud-sync", "-no-reminders"]
         app.launch()
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            // `TEST_RUNNER_PORTRAIT=1` for the App Store: a landscape screenshot comes back on a
-            // portrait canvas, half of it black and the right side cut off. Set either way, since
-            // the simulator keeps whichever way the last run left it.
-            let portrait = ProcessInfo.processInfo.environment["PORTRAIT"] != nil
-            XCUIDevice.shared.orientation = portrait ? .portrait : .landscapeLeft
+        // `TEST_RUNNER_PORTRAIT=1` for the App Store: a landscape screenshot comes back on a
+        // portrait canvas, half of it black and the right side cut off (an iPad, and an unfolded
+        // iPhone Duo, which comes up sideways). Set either way, since the simulator keeps whichever
+        // way the last run left it.
+        if ProcessInfo.processInfo.environment["PORTRAIT"] != nil {
+            XCUIDevice.shared.orientation = .portrait
+        } else if UIDevice.current.userInterfaceIdiom == .pad {
+            XCUIDevice.shared.orientation = .landscapeLeft
         }
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30) || app.buttons["Home"].waitForExistence(timeout: 5))
 

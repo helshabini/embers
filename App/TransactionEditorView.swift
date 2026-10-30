@@ -30,6 +30,7 @@ struct TransactionEditorView: View {
     @AppStorage("lastAccountIdentifier") private var lastAccountIdentifier = ""
 
     private enum Field: Hashable { case payee, memo, rate }
+    private static let amountCard = "amount-card"
 
     init(account: Account?, existing: LedgerTransaction?) {
         _draft = State(initialValue: TransactionDraft(account: account, existing: existing))
@@ -59,6 +60,10 @@ struct TransactionEditorView: View {
                         try? await Task.sleep(for: .milliseconds(350))
                         withAnimation(.snappy) { proxy.scrollTo(Field.payee, anchor: .top) }
                     }
+                }
+                .onAppear { keepAmountAboveKeypad(proxy) }
+                .onChange(of: isKeypadShowing) { _, showing in
+                    if showing { keepAmountAboveKeypad(proxy) }
                 }
             }
             .scrollDismissesKeyboard(.interactively)
@@ -151,6 +156,18 @@ struct TransactionEditorView: View {
 
     // MARK: - Amount
 
+    /// Scrolls the amount just clear of the keypad. On iPhone Duo's inner display the sheet is
+    /// 669 points tall and the keypad covered the figure being typed; on a taller screen the form
+    /// is already at its top and this moves nothing. After the sheet has settled, as for the payee,
+    /// and only if the keypad is still up then: an existing entry opens with it put away.
+    private func keepAmountAboveKeypad(_ proxy: ScrollViewProxy) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(350))
+            guard isKeypadShowing else { return }
+            withAnimation(.snappy) { proxy.scrollTo(Self.amountCard, anchor: .bottom) }
+        }
+    }
+
     @ViewBuilder
     private var amountSection: some View {
         if let entry = draft.entry {
@@ -204,6 +221,7 @@ struct TransactionEditorView: View {
                 }
                 .padding(.vertical, 10)
                 .frame(maxWidth: .infinity)
+                .id(Self.amountCard)
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 .listRowBackground(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)

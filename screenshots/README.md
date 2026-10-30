@@ -45,6 +45,16 @@ Pro 13-inch) and Mac (2880 × 1800). They are not kept here; the last set was ma
   Not as a launch argument: under the test runner, `-appearance dark` leaves the app with no
   window. The window's rounded corners are transparent, which App Store Connect refuses, so
   flatten each image onto a solid background before uploading.
+- **iPhone Duo** (optional until April 2027; it earns the "optimized for iPhone Duo" badge): the
+  outer display is 1398 × 2034 and the inner 2853 × 2007, and the simulator needs the iOS 27.1
+  runtime. It boots folded, and nothing on the command line unfolds it: do that by hand in Device
+  Hub. Folded, the catalogue works as on any iPhone. Unfolded, XCTest's screenshots of the inner
+  display come back black, so drive the app from a test that prints a marker on each screen and
+  pauses, and take the picture from the host with `simctl io <device> screenshot
+  --display=<inner display UUID>` (`simctl io <device> enumerate` lists them). Those keep the
+  screen's rounded corners as transparency; flatten them.
+- **A test run that seems to hang after its last test** is `xcodebuild` collecting diagnostics
+  for up to ten minutes after a failure. Pass `-collect-test-diagnostics never`.
 - **No window at all, from Xcode or a test?** Check that the iPhone app is not also installed on
   the Mac ("My Mac (Designed for iPad)" installs it under the same bundle ID). On 31 Oct 2026,
   unregistering it with `lsregister -u` brought the window back.
