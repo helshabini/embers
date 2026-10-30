@@ -64,6 +64,11 @@ struct EmbersMacApp: App {
 /// which a button pressed on a notification while the app was closed does not wait for.
 final class MacAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if DEBUG
+        // Here, not only in `StoreLoader.load()`: that waits on the window, and one launch from
+        // Xcode never got as far as a window, so the push sat idle for ten minutes.
+        MainActor.assumeIsolated { CloudKitSchema.runIfRequested() }
+        #endif
         MainActor.assumeIsolated { ReminderScheduler.shared.attach() }
     }
 

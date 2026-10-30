@@ -14,21 +14,35 @@ import SwiftData
 /// to the real store and quits. `-check-cloudkit-schema` does the same without uploading.
 @MainActor
 enum CloudKitSchema {
-    static func runIfRequested() {
+    private static var started = false
+
+    /// True when asked to run: the caller must then leave the real store unopened.
+    ///
+    /// Off the main thread: the push blocks for up to 30 seconds on CloudKit, and the Mac starts it
+    /// from `applicationDidFinishLaunching`, where blocking would hang the launch.
+    @discardableResult
+    static func runIfRequested() -> Bool {
         let arguments = ProcessInfo.processInfo.arguments
         let upload = arguments.contains("-initialize-cloudkit-schema")
-        guard upload || arguments.contains("-check-cloudkit-schema") else { return }
-        do {
-            try initialize(options: upload ? [] : [.dryRun, .printSchema])
-            print("CloudKit schema: \(upload ? "uploaded to Development" : "valid, nothing uploaded")")
-            exit(0)
-        } catch {
-            print("CloudKit schema failed: \(error)")
-            exit(1)
+        guard upload || arguments.contains("-check-cloudkit-schema") else { return false }
+        guard !started else { return true }
+        started = true
+        let identifier = CloudSync.containerIdentifier
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try initialize(identifier: identifier, options: upload ? [] : [.dryRun, .printSchema])
+                print("CloudKit schema: \(upload ? "uploaded to Development" : "valid, nothing uploaded")")
+                exit(0)
+            } catch {
+                print("CloudKit schema failed: \(error)")
+                exit(1)
+            }
         }
+        return true
     }
 
-    private static func initialize(
+    nonisolated private static func initialize(
+        identifier: String,
         options: NSPersistentCloudKitContainerSchemaInitializationOptions
     ) throws {
         guard let model = NSManagedObjectModel.makeManagedObjectModel(for: EmbersStore.modelTypes) else {
@@ -38,7 +52,7 @@ enum CloudKitSchema {
         let url = URL.temporaryDirectory.appending(path: "CloudKitSchema-\(UUID().uuidString).store")
         let description = NSPersistentStoreDescription(url: url)
         description.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(
-            containerIdentifier: CloudSync.containerIdentifier
+            containerIdentifier: identifier
         )
         description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
         description.shouldAddStoreAsynchronously = false
