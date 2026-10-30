@@ -89,6 +89,35 @@ final class MacScreenCatalogUITests: XCTestCase {
         }
     }
 
+    /// The App Store set: the main screens only, at whatever size the window was left. Size it to
+    /// 1440 × 900 points first, which comes out at the listing's 2880 × 1800. Kept apart from the
+    /// catalogue, whose month-picker step lost the window on 31 Oct 2026, and sheets come last.
+    ///
+    /// No `-reset-ui-state`, so the appearance comes from the stored `appearance` default: write
+    /// `light` or `dark` into the container's preferences before running. Passing it as a launch
+    /// argument instead (`-appearance dark`) left the test with no window at all.
+    func testAppStoreScreens() {
+        app = XCUIApplication()
+        app.launchArguments += ["-no-cloud-sync", "-no-reminders"]
+        app.launch()
+        XCTAssertTrue(sidebar("sidebar-plan").waitForExistence(timeout: 30), "the sidebar should load")
+        sleep(2)
+        shot("store-01-plan")
+        if tap(sidebar("sidebar-transactions")) { shot("store-02-transactions") }
+        if tap(sidebar("sidebar-account")) { shot("store-03-register") }
+        if tap(sidebar("sidebar-reports")) { sleep(1); shot("store-04-reports") }
+        if tap(sidebar("sidebar-budget-check")) { shot("store-05-budget-check") }
+        if tap(sidebar("sidebar-account")), tap(app.buttons["add-transaction"].firstMatch) {
+            let amount = app.textFields["amount-field"].firstMatch
+            if amount.waitForExistence(timeout: 3) {
+                amount.click()
+                amount.typeText("1250")
+                sleep(1)
+            }
+            shot("store-06-new-transaction")
+        }
+    }
+
     /// The notice a new Mac shows while its budget comes down from iCloud, which a test cannot
     /// stage for real.
     func testFirstDownloadNotice() {

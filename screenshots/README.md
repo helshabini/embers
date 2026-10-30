@@ -26,3 +26,25 @@ Then restore the backed-up store. The files here are taken from the catalogue as
 
 The demo budget's dates are fixed around 27 October 2026; move `TODAY` in the script to retake
 them later, or the current month will be empty.
+
+## App Store sets
+
+The listing wants iPhone 6.9″ (1320 × 2868, the iPhone 18 Pro Max), iPad 13″ (2064 × 2752, the iPad
+Pro 13-inch) and Mac (2880 × 1800). They are not kept here; the last set was made on 31 Oct 2026.
+
+- **iPhone and iPad:** the recipe above on each simulator, with `TEST_RUNNER_PORTRAIT=1` in front of
+  `xcodebuild` for the iPad. Landscape screenshots come back on a portrait canvas, half black.
+- **Mac:** seed the Mac app's `Embers-UITests.store` the same way (move the existing one aside
+  first; seeding into it adds to it). Set the window and the look in the container's preferences,
+  then run `MacScreenCatalogUITests/testAppStoreScreens` and put both back afterwards:
+  ```bash
+  P=~/Library/Containers/com.helshabini.Embers/Data/Library/Preferences/com.helshabini.Embers
+  defaults write $P "NSWindow Frame main" "180 115 1440 900 0 0 1800 1130 "   # 2880 × 1800 at 2×
+  defaults write $P appearance light                                         # then dark
+  ```
+  Not as a launch argument: under the test runner, `-appearance dark` leaves the app with no
+  window. The window's rounded corners are transparent, which App Store Connect refuses, so
+  flatten each image onto a solid background before uploading.
+- **No window at all, from Xcode or a test?** Check that the iPhone app is not also installed on
+  the Mac ("My Mac (Designed for iPad)" installs it under the same bundle ID). On 31 Oct 2026,
+  unregistering it with `lsregister -u` brought the window back.
