@@ -901,8 +901,9 @@ final class EmbersUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["To Approve"].waitForExistence(timeout: 5))
         let rows = app.buttons.matching(identifier: "approval-row")
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5))
-        // Only ones made due by this suite, so few enough that every row is rendered.
-        let before = rows.count
+        // The row itself, not a count: rows are drawn lazily, and once more were due than fit on
+        // screen (22, on 31 Oct 2026), approving one drew the next and the count stood still.
+        let approved = rows.firstMatch.label
         capture(app, "45-to-approve-list")
 
         rows.firstMatch.tap()
@@ -912,7 +913,7 @@ final class EmbersUITests: XCTestCase {
         capture(app, "46-approve-choices")
         approve.tap()
 
-        let done = NSPredicate { _, _ in rows.count == before - 1 }
+        let done = NSPredicate { _, _ in rows.firstMatch.label != approved }
         wait(for: [XCTNSPredicateExpectation(predicate: done, object: nil)], timeout: 10)
         capture(app, "47-after-approving")
     }
