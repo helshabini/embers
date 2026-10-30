@@ -36,11 +36,6 @@ Signing & Capabilities.
 cd Packages/EmbersCore && swift run selfcheck     # the budget rules, headlessly, in seconds
 ```
 
-## Documentation
-
-[`docs/`](docs/README.md) is a hand-written technical wiki: how the budget engine works, the
-invariants it keeps and the evidence behind them. Start at [docs/README.md](docs/README.md).
-
 ## License
 
 The source is [MIT-licensed](LICENSE). The App Store version is a paid download, which covers the

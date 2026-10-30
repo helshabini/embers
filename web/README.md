@@ -7,7 +7,7 @@ Support URL) and the license.
 
 Preview it with `python3 -m http.server -d web 8000`. Host it anywhere that serves a folder:
 Cloudflare Pages, Netlify, or GitHub Pages through an Actions workflow that publishes `web/`
-(Pages' branch mode can only serve `/` or `/docs`, and `docs/` is the wiki).
+(Pages' branch mode can only serve `/` or `/docs`).
 
 ## What is still a placeholder
 

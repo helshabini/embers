@@ -14,3 +14,7 @@ build/
 *.xcuserstate
 Packages/*/.build/
 __pycache__/
+
+# The technical wiki and the notes for Claude that point into it stay private, for local work.
+docs/
+CLAUDE.md
