@@ -1,8 +1,8 @@
 // The App Store links and the GitHub repository, in one place. Until the listing exists these are empty, and every store
 // button stays marked "Soon" and goes nowhere. Fill them in and the buttons come alive on every page.
 var EMBERS_STORE = {
-  ios: "",   // e.g. "https://apps.apple.com/app/embers/id0000000000"
-  mac: ""    // e.g. "https://apps.apple.com/app/embers/id0000000000?platform=mac"
+  ios: "https://apps.apple.com/app/id6824939307",
+  mac: "https://apps.apple.com/app/id6824939307?platform=mac"
 };
 
 // "owner/name" once the repository is public. Empty, the GitHub links point at a placeholder and
