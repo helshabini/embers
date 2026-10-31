@@ -9,11 +9,11 @@ Preview it with `python3 -m http.server -d web 8000`. Host it anywhere that serv
 Cloudflare Pages, Netlify, or GitHub Pages through an Actions workflow that publishes `web/`
 (Pages' branch mode can only serve `/` or `/docs`).
 
-## What is still a placeholder
+## Where the links live
 
 | What | Where |
 |---|---|
-| App Store and Mac App Store links | `EMBERS_STORE` in `assets/store-links.js`. Empty, the buttons read "Soon" and go nowhere; filled, every button on every page works. Also uncomment `apple-itunes-app` in `index.html` for Safari's install banner |
+| App Store and Mac App Store links | `EMBERS_STORE` in `assets/store-links.js` (App Store ID 6824939307). Emptied, the buttons read "Soon" and go nowhere. The same ID is in `apple-itunes-app` in `index.html`, Safari's install banner, and in the buttons' own `href`s for visitors without JavaScript |
 | GitHub repository | `EMBERS_REPO` in `assets/store-links.js` (`"owner/name"`). It rewrites every GitHub link and turns on the star count in the header |
 | The domain | `https://getembers.app` in every page's canonical and Open Graph tags, `robots.txt` and `sitemap.xml` |
 | Support address | `support@getembers.app` in `privacy.html` and `support.html` |
