@@ -191,30 +191,40 @@ final class ReminderScheduler: NSObject {
     }
 }
 
+/// The completion-handler forms, not the `async` ones, and each handler called on the main actor.
+///
+/// As `nonisolated async` methods, Swift called UIKit's handler from whichever thread the task
+/// finished on. A tap that launches the app has UIKit update its snapshot in that handler, and it
+/// asserts it is on the main thread: every reminder tapped while Embers was closed crashed it on the
+/// way up (`-[UIApplication _performBlockAfterCATransactionCommitSynchronizes:]`, SIGABRT).
+/// `NotificationLaunchUITests` taps one.
 extension ReminderScheduler: UNUserNotificationCenterDelegate {
     /// Shown while the app is open too: a payment due today is worth a banner either way.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
-        [.banner, .list, .sound]
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping @Sendable (UNNotificationPresentationOptions) -> Void
+    ) {
+        Task { @MainActor in completionHandler([.banner, .list, .sound]) }
     }
 
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse
-    ) async {
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping @Sendable () -> Void
+    ) {
         let info = response.notification.request.content.userInfo
         let kind = (info["kind"] as? String).flatMap(ReminderKind.init(rawValue:))
         let transactionID = (info["transaction"] as? String).flatMap(UUID.init(uuidString:))
         let action = response.actionIdentifier
-        await MainActor.run {
+        Task { @MainActor in
             if let transactionID, action != UNNotificationDefaultActionIdentifier,
                action != UNNotificationDismissActionIdentifier {
                 answer(action, transactionID: transactionID)
             } else {
                 open(kind)
             }
+            completionHandler()
         }
     }
 }

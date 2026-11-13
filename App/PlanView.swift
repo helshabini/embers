@@ -13,13 +13,35 @@ struct PlanView: View {
     @State private var showsHidden = false
     @State private var isEditingPlan = false
     @State private var isPickingMonth = false
+    /// The Assigned figure being typed, with the keypad up.
+    @State private var assignSession: AssignSession?
 
     var body: some View {
         NavigationStack {
-            List {
-                readyToAssignSection
-                ForEach(visibleGroups) { group in
-                    groupSection(group)
+            ScrollViewReader { proxy in
+                List {
+                    readyToAssignSection
+                    if !visibleGroups.isEmpty { columnHeadings }
+                    ForEach(visibleGroups) { group in
+                        groupSection(group)
+                    }
+                }
+                // The row being assigned to stays in sight above the keypad.
+                .onChange(of: assignSession?.category.persistentModelID) { _, id in
+                    guard let id else { return }
+                    withAnimation(.snappy) { proxy.scrollTo(id, anchor: .center) }
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                if let opened = assignSession {
+                    // Falls back to the session it opened on: while it slides away the session is
+                    // already gone, and a recompute landing then draws it once more.
+                    AssignKeypad(
+                        session: Binding(get: { assignSession ?? opened }, set: { assignSession = $0 }),
+                        onDone: finishAssigning,
+                        onCancel: { withAnimation(.snappy) { assignSession = nil } }
+                    )
+                    .transition(.move(edge: .bottom))
                 }
             }
             .navigationTitle("Plan")
@@ -29,6 +51,8 @@ struct PlanView: View {
                     selected: budget.visibleMonth,
                     available: budget.budgetYears
                 ) { month in
+                    // Saved into the month it was typed for, before that month leaves the screen.
+                    finishAssigning()
                     budget.visibleMonth = month
                     budget.refresh(in: modelContext)
                 }
@@ -36,6 +60,8 @@ struct PlanView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
+                        // Saved first: the plan editor can delete the category being typed into.
+                        finishAssigning()
                         isEditingPlan = true
                     } label: {
                         Label("Edit Plan", systemImage: "slider.horizontal.3")
@@ -118,15 +144,52 @@ struct PlanView: View {
         }
     }
 
+    /// What the two figures on each row are. Without them the Assigned field was one more number.
+    private var columnHeadings: some View {
+        HStack(spacing: PlanColumns.spacing) {
+            Spacer()
+            Text("Assigned").frame(width: PlanColumns.assigned, alignment: .trailing)
+            Text("Available").frame(width: PlanColumns.available, alignment: .trailing)
+        }
+        .font(.caption.weight(.semibold))
+        .textCase(.uppercase)
+        .foregroundStyle(.secondary)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 0, trailing: 20))
+    }
+
     private func groupSection(_ group: CategoryGroup) -> some View {
         Section {
             ForEach(categories(in: group)) { category in
+                // Two targets in one row: the figure to assign, laid over the room the row leaves
+                // for it, and the rest of the row for what is behind it. Plain buttons, or a list
+                // row hands every tap to all of them.
                 Button {
+                    finishAssigning()
                     assigning = category
                 } label: {
                     CategoryRow(category: category)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("category-row")
+                .overlay(alignment: .trailing) {
+                    Button {
+                        startAssigning(category)
+                    } label: {
+                        AssignedField(
+                            amount: budget.money(budget.state(of: category).assigned),
+                            isEditing: assignSession?.category.persistentModelID == category.persistentModelID
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: PlanColumns.assigned)
+                    .padding(.trailing, PlanColumns.available + PlanColumns.spacing)
+                    .accessibilityIdentifier("assigned-field")
+                    .accessibilityLabel(Text("Assigned to \(category.displayName)"))
+                    .accessibilityValue(Text(budget.money(budget.state(of: category).assigned)))
+                }
+                .id(category.persistentModelID)
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     if shortfall(of: category) > 0 {
                         Button {
@@ -139,12 +202,45 @@ struct PlanView: View {
                 }
             }
         } header: {
-            HStack {
+            HStack(spacing: PlanColumns.spacing) {
                 Text(group.displayName)
-                Spacer()
-                Text(budget.money(groupAvailable(group)))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Group {
+                    Text(budget.money(groupAssigned(group)))
+                        .frame(width: PlanColumns.assigned, alignment: .trailing)
+                    Text(budget.money(groupAvailable(group)))
+                        .frame(width: PlanColumns.available, alignment: .trailing)
+                }
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
             }
         }
+    }
+
+    /// Opens the keypad on a category, saving whatever was being typed into another first.
+    private func startAssigning(_ category: BudgetCategoryModel) {
+        if assignSession?.category.persistentModelID == category.persistentModelID { return }
+        // A sum with no answer stays up, its Assign disabled, rather than vanishing unsaved.
+        if let open = assignSession, open.calculator.result == nil { return }
+        finishAssigning()
+        withAnimation(.snappy) {
+            assignSession = AssignSession(
+                category: category,
+                month: budget.visibleMonth,
+                shown: budget.state(of: category).assigned,
+                currency: budget.baseCurrency
+            )
+        }
+    }
+
+    private func finishAssigning() {
+        guard let session = assignSession else { return }
+        session.commit(in: modelContext, budget: budget)
+        withAnimation(.snappy) { assignSession = nil }
+    }
+
+    private func groupAssigned(_ group: CategoryGroup) -> MinorUnits {
+        categories(in: group).reduce(0) { $0 + budget.state(of: $1).assigned }
     }
 
     private var readyToAssignShadow: Color {
@@ -196,6 +292,7 @@ struct PlanView: View {
     }
 
     private func step(by months: Int) {
+        finishAssigning()
         budget.visibleMonth = budget.visibleMonth.adding(months: months)
         budget.refresh(in: modelContext)
     }
@@ -206,7 +303,9 @@ struct CategoryRow: View {
     @Environment(BudgetModel.self) private var budget
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
+        // Name, then room for the Assigned field the Plan lays over it, then Available: the order
+        // and widths of the headings above, so each figure sits under its own.
+        HStack(spacing: PlanColumns.spacing) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(category.displayName)
                 if state.activity != 0 {
@@ -215,7 +314,8 @@ struct CategoryRow: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Color.clear.frame(width: PlanColumns.assigned, height: 1)
             VStack(alignment: .trailing, spacing: 2) {
                 Text(budget.money(state.available))
                     .monospacedDigit()
@@ -224,18 +324,26 @@ struct CategoryRow: View {
                     Text("\(budget.money(needed)) more needed")
                         .font(.caption2)
                         .foregroundStyle(Flame.glow)
+                        .multilineTextAlignment(.trailing)
                         .accessibilityIdentifier("category-needs-more")
-                } else if state.assigned != 0 {
-                    Text("assigned \(budget.money(state.assigned))")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
                 }
             }
+            .lineLimit(2)
+            .minimumScaleFactor(0.7)
+            .frame(width: PlanColumns.available, alignment: .trailing)
         }
         .padding(.vertical, 2)
+        .contentShape(Rectangle())
     }
 
     private var state: CategoryMonthState { budget.state(of: category) }
 
     private var availableColor: Color { budget.status(of: category).color }
+}
+
+/// The widths the Plan's figures line up in, row and heading alike.
+enum PlanColumns {
+    static let assigned: CGFloat = 96
+    static let available: CGFloat = 84
+    static let spacing: CGFloat = 8
 }

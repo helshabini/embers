@@ -37,6 +37,16 @@ struct EmbersMacApp: App {
                 }
             }
             .frame(minWidth: 900, minHeight: 560)
+            #if DEBUG
+            // For `MacWindowLayoutUITests`: under test a drag on the window's edge does not resize
+            // it, and a saved frame outranks `defaultSize`, so the window is sized here instead.
+            .task {
+                guard ProcessInfo.processInfo.arguments.contains("-narrowest-window") else { return }
+                try? await Task.sleep(for: .milliseconds(500))
+                NSApplication.shared.windows.first { $0.isVisible && $0.canBecomeMain }?
+                    .setContentSize(NSSize(width: 900, height: 820))
+            }
+            #endif
             .appearanceApplied(appearance)
             // Digits 0–9 in every language; see `Locale.display`.
             .environment(\.locale, .display)

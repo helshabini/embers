@@ -414,6 +414,18 @@ private struct AssignedField: View {
             .textFieldStyle(.plain)
             .multilineTextAlignment(.trailing)
             .monospacedDigit()
+            // Shaped like a field, so it is seen to be one: as bare text nobody knew to click it.
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(isFocused ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.08))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .strokeBorder(isFocused ? Color.accentColor : Color.secondary.opacity(0.2))
+            )
+            .help("Type an amount, or a sum such as 100+50")
             .focused($isFocused)
             .onAppear { text = shown }
             // The figure moved underneath — a recompute, or another device. Not while typing.
@@ -429,7 +441,18 @@ private struct AssignedField: View {
 
     private func save() {
         let trimmed = text.trimmingCharacters(in: .whitespaces)
-        let amount = trimmed.isEmpty ? 0 : Money.parse(trimmed, currency: currency)?.minorUnits
+        // A sum first — "100+50", "1200/12" — since the ordinary parser would read only part of it,
+        // and a sum that comes to nothing is refused rather than read in part.
+        let amount: MinorUnits?
+        if trimmed.isEmpty {
+            amount = 0
+        } else {
+            switch AssignmentCalculator.read(typed: trimmed, currency: currency, locale: .display) {
+            case let .sum(result): amount = result
+            case .malformed: amount = nil
+            case .plain: amount = Money.parse(trimmed, currency: currency)?.minorUnits
+            }
+        }
         guard let amount else {
             // Not a number: put back what was there rather than guess.
             text = shown

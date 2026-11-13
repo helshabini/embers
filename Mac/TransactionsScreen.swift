@@ -252,24 +252,30 @@ struct TransactionsScreen: View {
 
     // MARK: - Above the table
 
-    @ViewBuilder
+    /// The figures or filter on the left, the scheduled toggle on the right — laid out compactly when
+    /// the register is narrow.
+    ///
+    /// A segmented control never shrinks, and nor does a row of four balances: in a window at its
+    /// default size, with the sidebar and the inspector open, the header held the register at about
+    /// 700 points, and the split view overflowed the window, cutting off both of its outer panes.
     private var header: some View {
-        HStack(alignment: .center, spacing: 24) {
+        ViewThatFits(in: .horizontal) {
+            headerRow(compact: false)
+            headerRow(compact: true)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+    }
+
+    private func headerRow(compact: Bool) -> some View {
+        HStack(alignment: .center, spacing: compact ? 12 : 24) {
             switch scope {
             case let .account(account):
-                Figure(title: String(localized: "Working balance"), amount: budget.balance(of: account), emphasised: true)
-                // Keys of their own: these label sums of money, which many languages word apart
-                // from a transaction's own cleared state — and inflect differently.
-                Figure(title: String(localized: "balance.cleared", defaultValue: "Cleared"), amount: settledTotals.cleared)
-                Figure(title: String(localized: "balance.uncleared", defaultValue: "Uncleared"), amount: settledTotals.uncleared)
-                if budget.upcoming(of: account) != 0 {
-                    Figure(title: String(localized: "Upcoming"), amount: budget.upcoming(of: account))
-                        .opacity(0.7)
-                }
+                balances(of: account, compact: compact)
             case .all:
-                attentionFilter
+                attentionFilter(compact: compact)
             }
-            Spacer()
+            Spacer(minLength: 8)
             if filter == .everything, scheduledCount > 0 {
                 scheduledToggle
             }
@@ -281,26 +287,59 @@ struct TransactionsScreen: View {
                 .accessibilityIdentifier("approve-all")
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+    }
+
+    /// In a row while there is room; two to a row when there is not.
+    @ViewBuilder
+    private func balances(of account: Account, compact: Bool) -> some View {
+        let figures = [
+            (String(localized: "Working balance"), budget.balance(of: account), true, 1.0),
+            // Keys of their own: these label sums of money, which many languages word apart from a
+            // transaction's own cleared state — and inflect differently.
+            (String(localized: "balance.cleared", defaultValue: "Cleared"), settledTotals.cleared, false, 1.0),
+            (String(localized: "balance.uncleared", defaultValue: "Uncleared"), settledTotals.uncleared, false, 1.0),
+        ] + (budget.upcoming(of: account) != 0
+            ? [(String(localized: "Upcoming"), budget.upcoming(of: account), false, 0.7)]
+            : [])
+        if compact {
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
+                ForEach(Array(stride(from: 0, to: figures.count, by: 2)), id: \.self) { start in
+                    GridRow {
+                        ForEach(figures[start..<min(start + 2, figures.count)], id: \.0) { figure in
+                            Figure(title: figure.0, amount: figure.1, emphasised: figure.2).opacity(figure.3)
+                        }
+                    }
+                }
+            }
+        } else {
+            HStack(alignment: .center, spacing: 24) {
+                ForEach(figures, id: \.0) { figure in
+                    Figure(title: figure.0, amount: figure.1, emphasised: figure.2).opacity(figure.3)
+                }
+            }
+        }
     }
 
     /// Up top, where they are seen: each waits on a decision, and until it is made the plan is not
-    /// telling the whole story.
+    /// telling the whole story. A menu when the register is too narrow for the segments.
     @ViewBuilder
-    private var attentionFilter: some View {
+    private func attentionFilter(compact: Bool) -> some View {
         if budget.dueForApprovalCount > 0 || !budget.uncategorized.isEmpty || filter != .everything {
-            Picker("Show", selection: $filter) {
+            let picker = Picker("Show", selection: $filter) {
                 Text("All").tag(Filter.everything)
                 Text("\(budget.dueForApprovalCount) to approve", comment: "A filter: scheduled entries waiting for approval")
                     .tag(Filter.toApprove)
                 Text(String(localized: "\(budget.uncategorized.count) uncategorized transactions", locale: .display))
                     .tag(Filter.uncategorized)
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
-            .fixedSize()
             .accessibilityIdentifier("attention-filter")
+            if compact {
+                // Gives way to the toggle beside it, shortening its label if it must.
+                picker.pickerStyle(.menu).frame(minWidth: 90, idealWidth: 240, maxWidth: 240)
+            } else {
+                picker.pickerStyle(.segmented).fixedSize()
+            }
         } else {
             Label("Nothing waiting on you", systemImage: "checkmark.circle")
                 .foregroundStyle(.secondary)
@@ -327,6 +366,8 @@ struct TransactionsScreen: View {
             }
         }
         .toggleStyle(.button)
+        // Its count is the point of it; squeezed, it drew as an empty orange lozenge.
+        .fixedSize()
         .help("Show what is entered for later, above what has happened")
         .accessibilityIdentifier("scheduled-header")
     }

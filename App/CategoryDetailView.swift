@@ -16,11 +16,22 @@ struct CategoryDetailView: View {
     @Environment(BudgetModel.self) private var budget
 
     @Query private var transactions: [LedgerTransaction]
-    @State private var assignedText = ""
-    /// What the Assigned field held before the person typed. What is saved is the change from this,
-    /// so an edit from another device that lands while they type is added to, not undone.
-    @State private var shownAssigned: MinorUnits = 0
-    @State private var editing: EditingTransaction?
+    /// The Assigned figure being typed, with the keypad up.
+    @State private var assignSession: AssignSession?
+    @State private var sheet: Sheet?
+
+    /// One sheet per view, so both kinds go through one `.sheet(item:)`.
+    private enum Sheet: Identifiable {
+        case edit(EditingTransaction)
+        case add
+
+        var id: String {
+            switch self {
+            case let .edit(editing): "edit-\(editing.id.hashValue)"
+            case .add: "add"
+            }
+        }
+    }
 
     init(category: BudgetCategoryModel, month: YearMonth) {
         self.category = category
@@ -52,18 +63,17 @@ struct CategoryDetailView: View {
 
                 Section {
                     LabeledContent("Carried in", value: budget.money(state.carriedIn))
-                    HStack {
-                        Text("Assigned")
-                        Spacer()
-                        TextField("0", text: $assignedText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .monospacedDigit()
-                            .onSubmit(saveAssigned)
-                        Button("Set", action: saveAssigned)
-                            .font(.caption.weight(.semibold))
-                            .buttonStyle(.bordered)
+                    Button(action: startAssigning) {
+                        HStack {
+                            Text("Assigned")
+                            Spacer()
+                            AssignedField(amount: budget.money(state.assigned), isEditing: assignSession != nil)
+                                .frame(width: PlanColumns.assigned)
+                        }
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("assigned-field")
                     LabeledContent("Spent") {
                         Text(budget.money(state.activity))
                             .foregroundStyle(Flame.amountColor(state.activity))
@@ -95,7 +105,7 @@ struct CategoryDetailView: View {
                     } else {
                         ForEach(transactions.filter(\.isLive)) { transaction in
                             Button {
-                                editing = EditingTransaction(transaction: transaction)
+                                sheet = .edit(EditingTransaction(transaction: transaction))
                             } label: {
                                 TransactionRow(transaction: transaction, showsAccount: true)
                             }
@@ -110,21 +120,44 @@ struct CategoryDetailView: View {
                     }
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                if let opened = assignSession {
+                    // Falls back to the session it opened on: while it slides away the session is
+                    // already gone, and a recompute landing then draws it once more.
+                    AssignKeypad(
+                        session: Binding(get: { assignSession ?? opened }, set: { assignSession = $0 }),
+                        onDone: finishAssigning,
+                        onCancel: { withAnimation(.snappy) { assignSession = nil } }
+                    )
+                    .transition(.move(edge: .bottom))
+                }
+            }
+            .onDisappear(perform: finishAssigning)
             .navigationTitle(category.displayName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+                // Out of the way while the keypad is up, which takes the foot of the screen.
+                if category.kind == .normal, assignSession == nil {
+                    ToolbarItem(placement: .bottomBar) {
+                        Button {
+                            sheet = .add
+                        } label: {
+                            Label("Add Transaction", systemImage: "plus.circle.fill")
+                                .labelStyle(.titleAndIcon)
+                        }
+                        .accessibilityIdentifier("category-add-transaction")
+                    }
+                }
             }
-            .sheet(item: $editing) { editing in
-                // Not `transaction.account`: this is re-read as the sheet closes, after a delete.
-                TransactionEditorView(account: nil, existing: editing.transaction)
-            }
-            .onAppear {
-                shownAssigned = state.assigned
-                assignedText = state.assigned == 0
-                    ? ""
-                    : Money(minorUnits: state.assigned, currency: budget.baseCurrency)
-                        .formatted(showCurrencySymbol: false)
+            .sheet(item: $sheet) { sheet in
+                switch sheet {
+                case let .edit(editing):
+                    // Not `transaction.account`: this is re-read as the sheet closes, after a delete.
+                    TransactionEditorView(account: nil, existing: editing.transaction)
+                case .add:
+                    TransactionEditorView(account: nil, existing: nil, category: category)
+                }
             }
         }
     }
@@ -155,13 +188,18 @@ struct CategoryDetailView: View {
         dismiss()
     }
 
-    private func saveAssigned() {
-        let amount = Money.parse(assignedText, currency: budget.baseCurrency)?.minorUnits ?? 0
-        try? AssignmentWriter.setAssigned(
-            amount, shown: shownAssigned, category: category, month: month, in: modelContext
-        )
-        // Saved twice without retyping, the second must find nothing left to change.
-        shownAssigned = amount
-        budget.refresh(in: modelContext)
+    private func startAssigning() {
+        guard assignSession == nil else { return }
+        withAnimation(.snappy) {
+            assignSession = AssignSession(
+                category: category, month: month, shown: state.assigned, currency: budget.baseCurrency
+            )
+        }
+    }
+
+    private func finishAssigning() {
+        guard let session = assignSession else { return }
+        session.commit(in: modelContext, budget: budget)
+        withAnimation(.snappy) { assignSession = nil }
     }
 }

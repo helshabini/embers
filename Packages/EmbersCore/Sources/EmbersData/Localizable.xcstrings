@@ -2875,6 +2875,52 @@
         }
       }
     },
+    "The plan already holds amounts recorded in its currency, so it can no longer change.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "في الخطة مبالغ مسجَّلة بعملتها بالفعل، لذا لم يعد من الممكن تغييرها."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Im Plan sind schon Beträge in seiner Währung erfasst, deshalb lässt sie sich nicht mehr ändern."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El plan ya tiene importes registrados en su moneda, así que ya no puede cambiar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le plan contient déjà des montants enregistrés dans sa devise, elle ne peut donc plus changer."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プランにはすでにこの通貨で記録された金額があるため、変更できません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O plano já tem valores registrados na sua moeda, então ela não pode mais mudar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计划中已有以其币种记录的金额，因此无法再更改。"
+          }
+        }
+      }
+    },
     "There is already something called “%@” here.": {
       "localizations": {
         "ar": {
@@ -3963,6 +4009,52 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "“%@” is not a currency.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» ليست عملة."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ ist keine Währung."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» no es una moneda."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » n’est pas une devise."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」は通貨ではありません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” não é uma moeda."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@”不是币种。"
           }
         }
       }

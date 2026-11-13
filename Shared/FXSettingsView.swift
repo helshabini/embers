@@ -16,13 +16,34 @@ struct FXSettingsView: View {
     @State private var defaultFeeText = ""
     @State private var quote: ExchangeRateQuote?
     @State private var isRefreshing = false
+    @State private var mayChangeCurrency = false
+    @State private var currencyFailure: String?
 
     var body: some View {
         Form {
             Section {
-                LabeledContent("Plan currency", value: budget.baseCurrency.code)
+                if mayChangeCurrency {
+                    NavigationLink {
+                        CurrencyListView(selected: budget.baseCurrency.code, onPick: changeCurrency)
+                    } label: {
+                        LabeledContent("Plan currency", value: budget.baseCurrency.code)
+                    }
+                    .accessibilityIdentifier("plan-currency")
+                } else {
+                    LabeledContent("Plan currency", value: budget.baseCurrency.code)
+                }
             } footer: {
-                Text("Everything is recorded in this currency, whatever you type it in.")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Everything is recorded in this currency, whatever you type it in.")
+                    if mayChangeCurrency {
+                        Text("It can be changed until the first amount is recorded.")
+                    } else {
+                        Text("It is fixed now that amounts are recorded in it: changing it would misread every one of them.")
+                    }
+                    if let currencyFailure {
+                        Text(currencyFailure).foregroundStyle(.red)
+                    }
+                }
             }
 
             Section {
@@ -94,7 +115,23 @@ struct FXSettingsView: View {
         .onDisappear { try? modelContext.save() }
         .task {
             defaultFeeText = formatted(planDefaultFee)
+            mayChangeCurrency = (try? PlanSettingsWriter.mayChangeBaseCurrency(in: modelContext)) ?? false
             await refresh(force: false)
+        }
+    }
+
+    private func changeCurrency(to code: String) {
+        do {
+            try PlanSettingsWriter.setBaseCurrency(code, in: modelContext)
+            currencyFailure = nil
+            budget.planCurrencyChosen()
+            budget.refresh(in: modelContext)
+            // Rates are kept per plan currency, so the ones on show belonged to the old one, and a
+            // currency never used here has none until they are fetched.
+            Task { quote = await ExchangeRateService.refreshIfNeeded(baseCode: code, in: modelContext) }
+        } catch {
+            currencyFailure = error.localizedDescription
+            mayChangeCurrency = (try? PlanSettingsWriter.mayChangeBaseCurrency(in: modelContext)) ?? false
         }
     }
 

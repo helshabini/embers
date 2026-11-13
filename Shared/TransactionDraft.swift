@@ -16,6 +16,8 @@ import SwiftData
 final class TransactionDraft {
     let existing: LedgerTransaction?
     private let initialAccount: Account?
+    /// The category a new entry was started from, as from a category's own screen.
+    private let initialCategory: BudgetCategoryModel?
 
     var account: Account?
     var transferDestination: Account?
@@ -40,9 +42,10 @@ final class TransactionDraft {
     /// Set once the row is deleted, so nothing on the way out reads it again.
     private(set) var hasDeleted = false
 
-    init(account: Account?, existing: LedgerTransaction?) {
+    init(account: Account?, existing: LedgerTransaction?, category: BudgetCategoryModel? = nil) {
         self.initialAccount = account
         self.existing = existing
+        self.initialCategory = category
     }
 
     var title: String {
@@ -209,6 +212,11 @@ final class TransactionDraft {
         account = resolved
         if existing == nil, resolved?.type.settlesImmediately == true {
             cleared = .cleared
+        }
+        // Chosen, not guessed: a payee's remembered category must not replace the one the entry
+        // was started from.
+        if existing == nil, let initialCategory {
+            choose(category: initialCategory)
         }
 
         // The cached rate, which is on disk and instant. Asking the network here meant the editor

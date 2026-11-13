@@ -65,6 +65,10 @@ final class EmbersUITests: XCTestCase {
             app.tabBars.firstMatch.waitForExistence(timeout: 30),
             "the budget should open behind the splash"
         )
+        // The simulator's own store, unlike the tests' one, may hold no plan yet, and a new plan
+        // asks for its currency first.
+        let chooseCurrency = app.buttons["plan-currency-continue"]
+        if chooseCurrency.waitForExistence(timeout: 5) { chooseCurrency.tap() }
         app.tabBars.buttons["Plan"].tap()
         XCTAssertTrue(
             app.navigationBars["Plan"].waitForExistence(timeout: 20),
@@ -561,25 +565,93 @@ final class EmbersUITests: XCTestCase {
         XCTAssertEqual(scheduled.count, 0, "closing it should put them away again")
     }
 
-    /// Every report card builds and says something, top to bottom.
-    func testReportsReadTopToBottom() {
+    /// Every report builds and says something, one tab at a time, and spending can be drilled into.
+    func testReportsOneAtATime() {
         let app = launchApp()
         app.tabBars.buttons["Reports"].tap()
         XCTAssertTrue(app.navigationBars["Reports"].waitForExistence(timeout: 10))
 
         XCTAssertTrue(app.staticTexts["Where it went"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Top categories"].exists, "the bar should be keyed")
+        XCTAssertTrue(app.staticTexts["Breakdown"].exists, "the bar should be keyed")
         capture(app, "27-reports-spending")
 
-        app.swipeUp()
-        app.swipeUp()
-        XCTAssertTrue(app.staticTexts["In against out"].waitForExistence(timeout: 5))
-        capture(app, "28-reports-income")
+        // Payees, then into the biggest, which breaks down by category.
+        app.buttons["Payees"].firstMatch.tap()
+        let share = app.buttons["spending-share"].firstMatch
+        XCTAssertTrue(share.waitForExistence(timeout: 5), "spending should break down by payee")
+        share.tap()
+        XCTAssertTrue(app.staticTexts["Transactions"].waitForExistence(timeout: 10), "a payee should open on its detail")
+        capture(app, "27a-reports-payee")
+        app.navigationBars.buttons.firstMatch.tap()
 
-        app.swipeUp()
-        app.swipeUp()
+        app.buttons["report-cashFlow"].tap()
+        XCTAssertTrue(app.staticTexts["Cash flow"].waitForExistence(timeout: 5))
+        capture(app, "28-reports-cash-flow")
+
+        app.buttons["report-inAndOut"].tap()
+        XCTAssertTrue(app.staticTexts["In against out"].waitForExistence(timeout: 5))
+        capture(app, "28a-reports-income")
+
+        app.buttons["report-netWorth"].tap()
         XCTAssertTrue(app.staticTexts["Net worth"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Debts"].exists, "the chart's key should name what is drawn")
         capture(app, "29-reports-networth")
+    }
+
+    /// Assigning is done on the Plan, with a sum, not on a second screen.
+    func testAssignOnThePlanWithASum() {
+        let app = launchApp()
+        app.tabBars.buttons["Plan"].tap()
+        XCTAssertTrue(app.navigationBars["Plan"].waitForExistence(timeout: 10))
+
+        let field = app.buttons["assigned-field"].firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        let before = field.value as? String ?? ""
+        field.tap()
+        XCTAssertTrue(app.buttons["assign-done"].waitForExistence(timeout: 5), "the keypad should open on the Plan")
+        for key in ["add", "1", "0"] { app.buttons["assign-key-\(key)"].tap() }
+        XCTAssertTrue(app.staticTexts["assign-result"].exists, "a sum should show what it comes to")
+        capture(app, "30-assign-keypad")
+        app.buttons["assign-done"].tap()
+
+        XCTAssertFalse(app.buttons["assign-done"].waitForExistence(timeout: 2), "assigning should put the keypad away")
+        // The figure is redrawn when the recompute behind the screen lands.
+        let changed = NSPredicate { _, _ in (field.value as? String) != before }
+        wait(for: [XCTNSPredicateExpectation(predicate: changed, object: nil)], timeout: 10)
+
+        // And taken back off, so the shared budget is left as it was found.
+        app.buttons["assigned-field"].firstMatch.tap()
+        for key in ["subtract", "1", "0"] { app.buttons["assign-key-\(key)"].tap() }
+        app.buttons["assign-done"].tap()
+        let restored = NSPredicate { _, _ in (field.value as? String) == before }
+        wait(for: [XCTNSPredicateExpectation(predicate: restored, object: nil)], timeout: 10)
+    }
+
+    /// A category's own screen starts a transaction in that category.
+    func testAddATransactionFromACategory() {
+        let app = launchApp()
+        app.tabBars.buttons["Plan"].tap()
+        let rows = app.buttons.matching(identifier: "category-row")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
+        // The Plan opens on the credit card group, whose payment categories take no spending and
+        // rightly offer none; the first ordinary category is further down.
+        let add = app.buttons["category-add-transaction"]
+        for index in 0..<8 {
+            rows.element(boundBy: index).tap()
+            if add.waitForExistence(timeout: 3) { break }
+            app.navigationBars.buttons["Done"].tap()
+        }
+        XCTAssertTrue(add.exists, "a category should offer to add a transaction")
+        let category = app.navigationBars.firstMatch.identifier
+        add.tap()
+        let picker = app.buttons["category-picker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            (picker.label as String).contains(category),
+            "the entry should start in \(category), not \(picker.label)"
+        )
+        capture(app, "31-add-from-category")
+        app.navigationBars.buttons["Cancel"].tap()
     }
 
     /// A transfer is two rows in the data and should be one line in a list that holds both.
@@ -913,7 +985,8 @@ final class EmbersUITests: XCTestCase {
         capture(app, "46-approve-choices")
         approve.tap()
 
-        let done = NSPredicate { _, _ in rows.firstMatch.label != approved }
+        // Gone, or replaced by the next: on a freshly seeded store it was the only one due.
+        let done = NSPredicate { _, _ in !rows.firstMatch.exists || rows.firstMatch.label != approved }
         wait(for: [XCTNSPredicateExpectation(predicate: done, object: nil)], timeout: 10)
         capture(app, "47-after-approving")
     }

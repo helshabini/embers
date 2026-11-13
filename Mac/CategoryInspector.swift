@@ -15,6 +15,7 @@ struct CategoryInspector: View {
     @Environment(BudgetModel.self) private var budget
     @Environment(\.modelContext) private var modelContext
     @Query private var transactions: [LedgerTransaction]
+    @State private var isAdding = false
 
     init(category: BudgetCategoryModel, month: YearMonth) {
         self.category = category
@@ -55,8 +56,21 @@ struct CategoryInspector: View {
                         .foregroundStyle(.white)
                 }
 
-                Text(category.displayName)
-                    .font(.title3.weight(.semibold))
+                HStack {
+                    Text(category.displayName)
+                        .font(.title3.weight(.semibold))
+                    Spacer()
+                    // A shortcut from where the money is being looked at to where it is spent: the
+                    // entry starts in this category.
+                    if category.kind == .normal {
+                        Button {
+                            isAdding = true
+                        } label: {
+                            Label("Add Transaction", systemImage: "plus")
+                        }
+                        .accessibilityIdentifier("category-add-transaction")
+                    }
+                }
 
                 Grid(alignment: .leading, verticalSpacing: 6) {
                     line(String(localized: "Carried in"), state.carriedIn)
@@ -93,6 +107,9 @@ struct CategoryInspector: View {
                 transactionList
             }
             .padding(16)
+        }
+        .sheet(isPresented: $isAdding) {
+            TransactionEditorSheet(category: category)
         }
     }
 

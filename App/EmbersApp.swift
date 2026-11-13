@@ -36,6 +36,7 @@ struct EmbersApp: App {
                     RootView()
                         .modelContainer(container)
                         .environment(cloud)
+                        .environment(\.isSplashShowing, !hasShownSplash)
                 case let .failed(message):
                     StoreFailureView(message: message) { store.load() }
                 }

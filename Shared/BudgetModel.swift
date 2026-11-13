@@ -70,6 +70,50 @@ final class BudgetModel {
         try? RecurrenceWriter.markScheduled(in: context, asOf: .endOfBudgetDay())
         try? RecurrenceWriter.advanceDueOccurrences(in: context, asOf: .endOfBudgetDay())
         recheck(in: context)
+        askForPlanCurrencyIfNew(in: context)
+    }
+
+    // MARK: - The plan's currency
+
+    /// Whether a new plan is waiting to be told which currency it is kept in.
+    var isChoosingPlanCurrency = false
+    /// What the question starts on.
+    private(set) var suggestedPlanCurrency = CurrencyRegistry.regionCode()
+
+    /// Remembered on the device rather than in the plan: a plan that holds no amounts can still
+    /// change currency, so a second device that asks again costs a tap, while a field in the plan
+    /// would be one more that CloudKit's production schema has to be taught.
+    private static let planCurrencyAskedKey = "planCurrencyAsked"
+
+    /// Asks once, and only while the plan holds no amounts. Run by the launch catch-up, which waits
+    /// for a new device's plan to arrive: before then every plan looks new.
+    private func askForPlanCurrencyIfNew(in context: ModelContext) {
+        guard !UserDefaults.standard.bool(forKey: Self.planCurrencyAskedKey),
+              (try? PlanSettingsWriter.mayChangeBaseCurrency(in: context)) == true
+        else { return }
+        suggestedPlanCurrency = CurrencyRegistry.regionCode()
+        isChoosingPlanCurrency = true
+    }
+
+    /// Takes the question back once amounts have arrived from another device: the plan was not new,
+    /// only not here yet, and its currency is already settled.
+    func withdrawPlanCurrencyQuestionIfSettled(in context: ModelContext) {
+        guard isChoosingPlanCurrency,
+              (try? PlanSettingsWriter.mayChangeBaseCurrency(in: context)) == false
+        else { return }
+        planCurrencyChosen()
+    }
+
+    /// After Start Fresh, which makes a new plan out of an old one. It keeps the plan's settings, so
+    /// the currency already chosen is offered: starting over is rarely moving country.
+    func askForPlanCurrency() {
+        suggestedPlanCurrency = baseCurrency.code
+        isChoosingPlanCurrency = true
+    }
+
+    func planCurrencyChosen() {
+        UserDefaults.standard.set(true, forKey: Self.planCurrencyAskedKey)
+        isChoosingPlanCurrency = false
     }
 
     /// Takes in what has arrived from another device.

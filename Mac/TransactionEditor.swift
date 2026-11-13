@@ -35,10 +35,11 @@ struct TransactionEditor: View {
     init(
         account: Account?,
         existing: LedgerTransaction?,
+        category: BudgetCategoryModel? = nil,
         onFinish: @escaping (_ savedTo: Account?) -> Void,
         onCancel: @escaping () -> Void
     ) {
-        _draft = State(initialValue: TransactionDraft(account: account, existing: existing))
+        _draft = State(initialValue: TransactionDraft(account: account, existing: existing, category: category))
         self.onFinish = onFinish
         self.onCancel = onCancel
     }

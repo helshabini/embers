@@ -3,6 +3,7 @@ import Foundation
 let check = Checker()
 
 moneyChecks(check)
+assignmentCalculatorChecks(check)
 parsingChecks(check)
 zipChecks(check)
 importChecks(check)
@@ -32,7 +33,9 @@ localDayChecks(check)
 listingChecks(check)
 categoryEditingChecks(check)
 reportChecks(check)
+reportBreakdownChecks(check)
 syncMergeChecks(check)
+planCurrencyChecks(check)
 endToEndChecks(check)
 
 exit(check.summarize())

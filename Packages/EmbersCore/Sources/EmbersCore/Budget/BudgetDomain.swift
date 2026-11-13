@@ -117,6 +117,8 @@ public struct BudgetEntry: Identifiable, Hashable, Sendable {
     /// Scheduled, and not yet confirmed by the person. Whatever its date, it has not happened: a
     /// subscription cancelled in the meantime must not be spent from the plan because its day came.
     public var awaitsApproval: Bool
+    /// Who the money went to or came from. Only the reports read it; the engine has no use for it.
+    public var payeeID: EntityID?
 
     public init(
         id: EntityID = UUID(),
@@ -125,8 +127,10 @@ public struct BudgetEntry: Identifiable, Hashable, Sendable {
         categoryID: EntityID? = nil,
         amount: MinorUnits,
         transferCounterAccountID: EntityID? = nil,
-        awaitsApproval: Bool = false
+        awaitsApproval: Bool = false,
+        payeeID: EntityID? = nil
     ) {
+        self.payeeID = payeeID
         self.id = id
         self.accountID = accountID
         self.date = date
@@ -164,13 +168,17 @@ public struct BudgetInput: Sendable {
     public var categories: [BudgetCategory]
     public var entries: [BudgetEntry]
     public var assignments: [BudgetAssignment]
+    /// Payee names by identifier, for the reports.
+    public var payeeNames: [EntityID: String]
 
     public init(
         accounts: [BudgetAccount] = [],
         categories: [BudgetCategory] = [],
         entries: [BudgetEntry] = [],
-        assignments: [BudgetAssignment] = []
+        assignments: [BudgetAssignment] = [],
+        payeeNames: [EntityID: String] = [:]
     ) {
+        self.payeeNames = payeeNames
         self.accounts = accounts
         self.categories = categories
         self.entries = entries

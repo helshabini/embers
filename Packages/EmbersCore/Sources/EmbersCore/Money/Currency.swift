@@ -88,6 +88,14 @@ public enum CurrencyRegistry {
 
     public static let usd = currency(forCode: "USD")
 
+    /// What a new plan offers first: the currency of the region the device is set to, which is
+    /// usually what its owner is paid in. A region with no currency of its own, or one Foundation
+    /// does not list, falls back to USD.
+    public static func regionCode(for locale: Locale = .current) -> String {
+        guard let code = locale.currency?.identifier.uppercased(), isValidCode(code) else { return usd.code }
+        return code
+    }
+
     private static let symbolLock = NSLock()
     nonisolated(unsafe) private static var symbolCache: [String: String] = [:]
 

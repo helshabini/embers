@@ -30,6 +30,14 @@ struct BackupView: View {
     /// What is under way, while a restore or Start Fresh writes the whole store.
     @State private var working: LocalizedStringKey?
     @State private var isError = false
+    /// Start Fresh's plan is new, so it is asked its currency — once the backup's save dialog has
+    /// gone, since only one thing can be presented at a time.
+    @State private var asksForCurrencyAfterSaving = false
+    #if os(macOS)
+    /// Asked here on the Mac: this is the Settings window, and a sheet on the main window behind it
+    /// would wait there unseen.
+    @State private var isAskingCurrencyHere = false
+    #endif
 
     @Query private var accounts: [Account]
     @Query private var transactions: [LedgerTransaction]
@@ -150,7 +158,20 @@ struct BackupView: View {
             case let .failure(error):
                 report(String(describing: error), isError: true)
             }
+            if asksForCurrencyAfterSaving {
+                asksForCurrencyAfterSaving = false
+                #if os(macOS)
+                isAskingCurrencyHere = true
+                #else
+                budget.askForPlanCurrency()
+                #endif
+            }
         }
+        #if os(macOS)
+        .sheet(isPresented: $isAskingCurrencyHere) {
+            PlanCurrencyPrompt(suggested: budget.baseCurrency.code)
+        }
+        #endif
         .fileImporter(isPresented: $isImporting, allowedContentTypes: [.json]) { result in
             switch result {
             case let .success(url):
@@ -288,6 +309,7 @@ struct BackupView: View {
                 data: data,
                 suggestedName: BackupWriter.suggestedFileName(for: archive)
             )
+            asksForCurrencyAfterSaving = true
             isExporting = true
             report(String(localized: "Cleared. Save the backup somewhere safe."), isError: false)
         } catch {

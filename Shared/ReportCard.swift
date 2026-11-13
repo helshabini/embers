@@ -1,3 +1,4 @@
+import Charts
 import EmbersCore
 import SwiftUI
 
@@ -128,5 +129,77 @@ struct ShareRow: View {
                 .foregroundStyle(.secondary)
         }
         .font(.callout)
+    }
+}
+
+extension MinorUnits {
+    /// Charts plot in major units; the ledger keeps minor ones. By the currency's own digits: a
+    /// yen plan has none, and dividing by a hundred drew it a hundredth of its size.
+    func major(_ currency: Currency) -> Double {
+        Double(self) / pow(10, Double(currency.minorUnitDigits))
+    }
+}
+
+/// The axes every report's charts share.
+struct ReportAxes {
+    let currency: Currency
+    /// How many months the chart spans, which decides how far apart the date labels sit.
+    let months: Int
+
+    /// Thousands named rather than spelled out, on the right where they do not push the plot over.
+    var amount: some AxisContent {
+        AxisMarks(position: .trailing, values: .automatic(desiredCount: 4)) { value in
+            AxisGridLine()
+            AxisValueLabel {
+                if let major = value.as(Double.self) {
+                    Text(compactAxisAmount(major, symbol: currency.symbol))
+                }
+            }
+        }
+    }
+
+    /// Dates along the bottom, at a spacing the width can actually hold.
+    var month: some AxisContent {
+        AxisMarks(values: .stride(by: .month, count: stride)) { value in
+            AxisGridLine()
+            AxisValueLabel {
+                if let date = value.as(Date.self) {
+                    Text(date.formatted(format))
+                }
+            }
+        }
+    }
+
+    /// How many months between labels.
+    ///
+    /// A fixed ceiling of six months meant seven years of history drew fourteen labels into the space
+    /// for six, which ran together as "AugFebAugFeb". The gap is chosen from the span instead, aiming
+    /// for about six labels, and snapped to a period a reader recognises rather than an arbitrary
+    /// number of months.
+    private var stride: Int {
+        guard months > 6 else { return 1 }
+        let wanted = Int((Double(months) / 6).rounded(.up))
+        return [1, 2, 3, 6, 12, 24, 60].first { $0 >= wanted } ?? 120
+    }
+
+    /// Months while the gap is short enough for them to mean something; years once it is not.
+    private var format: Date.FormatStyle {
+        switch stride {
+        case ..<6: .dateTime.month(.abbreviated).locale(.display)
+        case ..<12: .dateTime.month(.abbreviated).year(.twoDigits).locale(.display)
+        default: .dateTime.year().locale(.display)
+        }
+    }
+
+    /// Zero to a little above the largest value, dipping below only if something is actually negative.
+    ///
+    /// Left to itself the axis rounded a single small negative month out to −$50K and spent half the
+    /// plot on empty space below the line.
+    static func domain(over values: [Double]) -> ClosedRange<Double> {
+        let highest = values.max() ?? 0
+        let lowest = values.min() ?? 0
+        let top = highest > 0 ? highest * 1.08 : 1
+        let bottom = lowest < 0 ? lowest * 1.08 : 0
+        return bottom...max(top, bottom + 1)
     }
 }

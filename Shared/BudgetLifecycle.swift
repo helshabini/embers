@@ -16,6 +16,7 @@ struct BudgetLifecycle: ViewModifier {
     @Environment(\.modelContext) private var modelContext
     @Environment(CloudSync.self) private var cloud
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.isSplashShowing) private var isSplashShowing
     @State private var hasCaughtUp = false
     private let reminders = ReminderScheduler.shared
 
@@ -30,6 +31,7 @@ struct BudgetLifecycle: ViewModifier {
             .onChange(of: cloud.status) { _, _ in catchUpOnceAllowed() }
             .onChange(of: cloud.importsCompleted) { _, _ in
                 budget.takeInArrivals(in: modelContext)
+                budget.withdrawPlanCurrencyQuestionIfSettled(in: modelContext)
                 catchUpOnceAllowed()
             }
             // Every recompute reads what reminders are planned from; planning again is cheap, and
@@ -49,6 +51,17 @@ struct BudgetLifecycle: ViewModifier {
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { budget.refresh(in: modelContext) }
             }
+            // Held back while the splash is up: the splash is a view in the window, and a sheet is
+            // drawn over the whole window, so it would rise over the launch animation. Held back too
+            // while anything is arriving from iCloud: a plan comes down in pieces, and one that looked
+            // empty may be a plan whose amounts have not landed yet. The budget is put into the
+            // environment above this, so the sheet is handed it again.
+            .sheet(isPresented: Binding(
+                get: { budget.isChoosingPlanCurrency && !isSplashShowing && !cloud.isImporting && !cloud.isFirstDownload },
+                set: { if !$0 { budget.isChoosingPlanCurrency = false } }
+            )) {
+                PlanCurrencyPrompt(suggested: budget.suggestedPlanCurrency).environment(budget)
+            }
     }
 
     /// The launch catch-up, held back on a new device until the plan has come down from iCloud:
@@ -66,4 +79,9 @@ extension View {
     func budgetLifecycle(_ budget: BudgetModel, onRoute: @escaping (AppTab) -> Void) -> some View {
         modifier(BudgetLifecycle(budget: budget, onRoute: onRoute))
     }
+}
+
+extension EnvironmentValues {
+    /// Whether the iPhone's splash is still over the window. The Mac has none.
+    @Entry var isSplashShowing = false
 }

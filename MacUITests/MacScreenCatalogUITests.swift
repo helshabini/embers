@@ -40,7 +40,22 @@ final class MacScreenCatalogUITests: XCTestCase {
                 tap(app.descendants(matching: .any).matching(identifier: "scheduled-header").firstMatch)
             }
         }
-        if tap(sidebar("sidebar-reports")) { shot("50-reports") }
+        if tap(sidebar("sidebar-reports")) {
+            shot("50-reports")
+            // By what the label holds: a segment's label carries its icon too.
+            let tabs = app.radioButtons
+            for (index, report) in ["cash-flow", "in-and-out", "net-worth"].enumerated() {
+                if tap(tabs.matching(NSPredicate(format: "label CONTAINS %@", ["Cash Flow", "In & Out", "Net Worth"][index])).firstMatch) {
+                    sleep(1)
+                    shot("5\(index + 2)-reports-\(report)")
+                }
+            }
+            tap(tabs.matching(NSPredicate(format: "label CONTAINS %@", "Spending")).firstMatch)
+            // A share leads to what is behind it. Last, since nothing here goes back.
+            if tap(app.descendants(matching: .any).matching(identifier: "spending-share").firstMatch) {
+                shot("51-reports-drill")
+            }
+        }
         if tap(sidebar("sidebar-budget-check")) { shot("60-budget-check") }
         if tap(sidebar("sidebar-account")) {
             shot("40-register")

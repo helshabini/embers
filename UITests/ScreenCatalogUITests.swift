@@ -70,7 +70,12 @@ final class ScreenCatalogUITests: XCTestCase {
         shot("12-month-picker")
         dismissSheet()
 
-        let category = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "assigned")).firstMatch
+        if tap(app.buttons["assigned-field"].firstMatch) {
+            shot("12a-assign-keypad")
+            tap(app.buttons["assign-cancel"])
+        }
+
+        let category = app.buttons["category-row"].firstMatch
         if tap(category) {
             shot("13-category-detail")
             app.swipeUp()
@@ -180,9 +185,18 @@ final class ScreenCatalogUITests: XCTestCase {
         tab("Reports")
         shot("50-reports")
         app.swipeUp()
-        shot("51-reports-middle")
-        app.swipeUp()
-        shot("52-reports-lower")
+        shot("51-reports-breakdown")
+        if tap(app.buttons["spending-share"].firstMatch) {
+            shot("51a-reports-drill")
+            app.swipeUp()
+            shot("51b-reports-drill-transactions")
+            app.navigationBars.buttons.firstMatch.tap()
+        }
+        app.swipeDown(); app.swipeDown()
+        for (index, report) in ["cashFlow", "inAndOut", "netWorth"].enumerated() {
+            if tap(app.buttons["report-\(report)"]) { shot("5\(index + 2)-reports-\(report)") }
+        }
+        tap(app.buttons["report-spending"])
     }
 
     /// Everything behind the gear on Home.

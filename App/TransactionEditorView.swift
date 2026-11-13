@@ -32,8 +32,8 @@ struct TransactionEditorView: View {
     private enum Field: Hashable { case payee, memo, rate }
     private static let amountCard = "amount-card"
 
-    init(account: Account?, existing: LedgerTransaction?) {
-        _draft = State(initialValue: TransactionDraft(account: account, existing: existing))
+    init(account: Account?, existing: LedgerTransaction?, category: BudgetCategoryModel? = nil) {
+        _draft = State(initialValue: TransactionDraft(account: account, existing: existing, category: category))
     }
 
     private var existing: LedgerTransaction? { draft.existing }
