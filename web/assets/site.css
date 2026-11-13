@@ -135,17 +135,14 @@ a:hover { text-decoration: underline; }
 .btn:hover { text-decoration: none; transform: translateY(-1px); }
 .btn svg { width: 22px; height: 22px; flex: none; }
 .btn small { display: block; font-size: 11px; font-weight: 500; opacity: .85; letter-spacing: .02em; }
-.btn-primary { background: var(--gradient); color: #fff; box-shadow: var(--glow-shadow); }
 .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--line); box-shadow: var(--shadow); }
-.btn[aria-disabled="true"] { cursor: default; }
-.btn[aria-disabled="true"]:hover { transform: none; }
 
 .store-buttons { display: flex; flex-wrap: wrap; gap: 12px; }
-.soon {
-  display: inline-block; margin-inline-start: 6px; padding: 2px 7px; border-radius: 999px;
-  background: rgba(255, 255, 255, .22); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-}
-.btn-secondary .soon { background: var(--tinted-fill); color: var(--deep); }
+/* Apple's own artwork, used as supplied: the black badge whenever both platforms appear, at least
+   40px tall, with a quarter of its height clear around it, which the 12px gap is at 48px. */
+.store-badge { display: block; line-height: 0; border-radius: 9px; transition: transform .15s; }
+.store-badge:hover { transform: translateY(-1px); }
+.store-badge img { height: 48px; width: auto; }
 
 /* ---------- Hero ---------- */
 
@@ -318,12 +315,10 @@ h2 { margin: 0 0 14px; font-size: clamp(30px, 4vw, 44px); line-height: 1.1; lett
   border-radius: 32px; padding: 56px 32px; text-align: center; color: #fff;
   background: var(--gradient); box-shadow: var(--glow-shadow); position: relative; overflow: hidden;
 }
-.cta img { width: 88px; height: 88px; border-radius: 22px; margin: 0 auto 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, .25); }
+.cta > img { width: 88px; height: 88px; border-radius: 22px; margin: 0 auto 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, .25); }
 .cta h2 { color: #fff; }
 .cta p { margin: 0 auto 28px; max-width: 34em; opacity: .92; font-size: 18px; }
 .cta .store-buttons { justify-content: center; }
-.cta .btn-secondary { background: #fff; color: #1c1c1e; border-color: transparent; }
-.cta .btn-secondary .soon { background: rgba(236, 48, 19, .12); color: var(--icon-deep); }
 
 .site-footer { padding: 40px 0 56px; color: var(--text-3); font-size: 14px; }
 .site-footer .wrap { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; justify-content: space-between; }

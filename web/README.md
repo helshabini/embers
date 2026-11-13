@@ -18,8 +18,9 @@ Cloudflare Pages, Netlify, or GitHub Pages through an Actions workflow that publ
 | The domain | `https://getembers.app` in every page's canonical and Open Graph tags, `robots.txt` and `sitemap.xml` |
 | Support address | `support@getembers.app` in `privacy.html` and `support.html` |
 
-The store buttons are drawn in the site's own style. Apple's guidelines ask for its official
-"Download on the App Store" badges, from Apple's marketing resources, once the app is listed.
+The store buttons are Apple's own badges, black, US English, from
+[toolbox.marketingtools.apple.com](https://toolbox.marketingtools.apple.com/app-store/), in
+`assets/badges/`. Use them as supplied: Apple's guidelines forbid recolouring or redrawing them.
 
 ## The theme
 

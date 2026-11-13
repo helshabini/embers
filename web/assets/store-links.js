@@ -1,5 +1,4 @@
-// The App Store links and the GitHub repository, in one place. Empty, every store button is marked
-// "Soon" and goes nowhere.
+// The App Store links and the GitHub repository, in one place.
 //
 // No storefront in the path: a link Apple's share sheet gives you carries the sharer's country
 // (/us/, /eg/), and sends every visitor to that store, where they may be unable to buy. Without
@@ -17,15 +16,7 @@ var EMBERS_REPO = "helshabini/embers";
 (function () {
   document.querySelectorAll("[data-store]").forEach(function (link) {
     var url = EMBERS_STORE[link.getAttribute("data-store")];
-    if (url) {
-      link.href = url;
-      link.removeAttribute("aria-disabled");
-      var soon = link.querySelector(".soon");
-      if (soon) soon.remove();
-    } else {
-      link.addEventListener("click", function (event) { event.preventDefault(); });
-      link.setAttribute("title", "Coming soon to the App Store");
-    }
+    if (url) link.href = url;
   });
 })();
 
