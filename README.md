@@ -6,6 +6,12 @@
 <a href="https://getembers.app">getembers.app</a></p>
 
 <p align="center">
+  <a href="https://apps.apple.com/app/id6824939307"><img src="web/assets/badges/app-store.svg" height="40" alt="Download on the App Store"></a>
+  &nbsp;
+  <a href="https://apps.apple.com/app/id6824939307?mt=12"><img src="web/assets/badges/mac-app-store.svg" height="40" alt="Download on the Mac App Store"></a>
+</p>
+
+<p align="center">
   <img src="screenshots/iphone/light/plan.png" width="200" alt="Plan">
   <img src="screenshots/iphone/light/new-transaction.png" width="200" alt="New transaction">
   <img src="screenshots/iphone/light/accounts.png" width="200" alt="Accounts">

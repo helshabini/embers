@@ -13,7 +13,7 @@ Cloudflare Pages, Netlify, or GitHub Pages through an Actions workflow that publ
 
 | What | Where |
 |---|---|
-| App Store and Mac App Store links | `EMBERS_STORE` in `assets/store-links.js`. Keep the storefront (`/us/`, `/eg/`) out of the URL so each visitor lands in their own country's store. The same id is in the buttons' `href` in `index.html` and in its `apple-itunes-app` banner tag |
+| App Store and Mac App Store links | `EMBERS_STORE` in `assets/store-links.js`. Keep the storefront (`/us/`, `/eg/`) out of the URL so each visitor lands in their own country's store. The same id is in the buttons' `href` in `index.html`, its `apple-itunes-app` banner tag, and the badges in the repository's own `README.md` |
 | GitHub repository | `EMBERS_REPO` in `assets/store-links.js` (`"owner/name"`). It rewrites every GitHub link and turns on the star count in the header |
 | The domain | `https://getembers.app` in every page's canonical and Open Graph tags, `robots.txt` and `sitemap.xml` |
 | Support address | `support@getembers.app` in `privacy.html` and `support.html` |
