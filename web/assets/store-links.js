@@ -1,8 +1,13 @@
-// The App Store links and the GitHub repository, in one place. Until the listing exists these are empty, and every store
-// button stays marked "Soon" and goes nowhere. Fill them in and the buttons come alive on every page.
+// The App Store links and the GitHub repository, in one place. Empty, every store button is marked
+// "Soon" and goes nowhere.
+//
+// No storefront in the path: a link Apple's share sheet gives you carries the sharer's country
+// (/us/, /eg/), and sends every visitor to that store, where they may be unable to buy. Without
+// one, Apple redirects each visitor to their own. iPhone and Mac are one universal purchase under
+// one id; mt=12 is what asks for the Mac listing.
 var EMBERS_STORE = {
-  ios: "",   // e.g. "https://apps.apple.com/app/embers/id0000000000"
-  mac: ""    // e.g. "https://apps.apple.com/app/embers/id0000000000?platform=mac"
+  ios: "https://apps.apple.com/app/id6824939307",
+  mac: "https://apps.apple.com/app/id6824939307?mt=12"
 };
 
 // "owner/name" once the repository is public. Empty, the GitHub links point at a placeholder and
