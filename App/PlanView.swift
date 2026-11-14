@@ -15,33 +15,50 @@ struct PlanView: View {
     @State private var isPickingMonth = false
     /// The Assigned figure being typed, with the keypad up.
     @State private var assignSession: AssignSession?
+    /// Whether the column headings above the first group have scrolled away, and a copy is pinned
+    /// in their place.
+    @State private var headingsPinned = false
+    /// Where the headings in the list end, and the list itself, so the pinned copy lines up with
+    /// them. Measured: the list's side margin differs between an iPhone and an iPad.
+    @State private var headingsTrailingEdge: CGFloat?
+    @State private var listTrailingEdge: CGFloat?
 
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
                 List {
                     readyToAssignSection
-                    if !visibleGroups.isEmpty { columnHeadings }
                     ForEach(visibleGroups) { group in
-                        groupSection(group)
+                        groupSection(group, isFirst: group.id == visibleGroups.first?.id)
+                    }
+                    // Room for the last rows to be scrolled up above the keypad. Room in the safe
+                    // area alone was not enough: the list scrolled a late row there, then pulled
+                    // back within its own content and put it under the keypad again.
+                    if assignSession != nil {
+                        Color.clear
+                            .frame(height: PlanColumns.keypadRoom)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                     }
                 }
-                // The row being assigned to stays in sight above the keypad.
+                // Scrolled down a long plan, the figures on each row were two numbers with nothing
+                // to say which was which.
+                .overlay(alignment: .top) {
+                    if headingsPinned, !visibleGroups.isEmpty {
+                        columnHeadings
+                            .padding(.horizontal, headingsTrailingGap)
+                            .padding(.vertical, 6)
+                            .background(.bar)
+                            .transition(.opacity)
+                            .accessibilityElement(children: .contain)
+                            .accessibilityIdentifier("plan-pinned-headings")
+                    }
+                }
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).maxX } action: { listTrailingEdge = $0 }
+                .assignKeypad($assignSession, onDone: finishAssigning)
                 .onChange(of: assignSession?.category.persistentModelID) { _, id in
                     guard let id else { return }
-                    withAnimation(.snappy) { proxy.scrollTo(id, anchor: .center) }
-                }
-            }
-            .safeAreaInset(edge: .bottom) {
-                if let opened = assignSession {
-                    // Falls back to the session it opened on: while it slides away the session is
-                    // already gone, and a recompute landing then draws it once more.
-                    AssignKeypad(
-                        session: Binding(get: { assignSession ?? opened }, set: { assignSession = $0 }),
-                        onDone: finishAssigning,
-                        onCancel: { withAnimation(.snappy) { assignSession = nil } }
-                    )
-                    .transition(.move(edge: .bottom))
+                    keepAboveKeypad(id, proxy)
                 }
             }
             .navigationTitle("Plan")
@@ -151,15 +168,25 @@ struct PlanView: View {
             Text("Assigned").frame(width: PlanColumns.assigned, alignment: .trailing)
             Text("Available").frame(width: PlanColumns.available, alignment: .trailing)
         }
-        .font(.caption.weight(.semibold))
+        .font(.caption2.weight(.semibold))
         .textCase(.uppercase)
         .foregroundStyle(.secondary)
-        .listRowBackground(Color.clear)
-        .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 0, trailing: 20))
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
     }
 
-    private func groupSection(_ group: CategoryGroup) -> some View {
+    /// Brings the row being assigned to into the middle of what the keypad leaves. Straight away it
+    /// was centred in the whole screen, the keypad not yet up, and the keypad then covered it. After
+    /// the keypad has settled, as the transaction editor does for its amount.
+    private func keepAboveKeypad(_ id: PersistentIdentifier, _ proxy: ScrollViewProxy) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(350))
+            guard assignSession?.category.persistentModelID == id else { return }
+            withAnimation(.snappy) { proxy.scrollTo(id, anchor: .center) }
+        }
+    }
+
+    private func groupSection(_ group: CategoryGroup, isFirst: Bool) -> some View {
         Section {
             ForEach(categories(in: group)) { category in
                 // Two targets in one row: the figure to assign, laid over the room the row leaves
@@ -190,6 +217,9 @@ struct PlanView: View {
                     .accessibilityValue(Text(budget.money(budget.state(of: category).assigned)))
                 }
                 .id(category.persistentModelID)
+                // Narrower at the trailing edge than a list's own, so the figures hug it and the
+                // name has the room.
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: PlanColumns.trailingInset))
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     if shortfall(of: category) > 0 {
                         Button {
@@ -202,19 +232,40 @@ struct PlanView: View {
                 }
             }
         } header: {
-            HStack(spacing: PlanColumns.spacing) {
-                Text(group.displayName)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Group {
-                    Text(budget.money(groupAssigned(group)))
-                        .frame(width: PlanColumns.assigned, alignment: .trailing)
-                    Text(budget.money(groupAvailable(group)))
-                        .frame(width: PlanColumns.available, alignment: .trailing)
+            VStack(spacing: 6) {
+                // In the first group's header rather than a row of their own: as a row, the section
+                // spacing opened a wide gap between them and the figures they name.
+                if isFirst {
+                    columnHeadings
+                        .onScrollVisibilityChange(threshold: 0.01) { visible in
+                            withAnimation(.easeOut(duration: 0.15)) { headingsPinned = !visible }
+                        }
+                        .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).maxX } action: {
+                            headingsTrailingEdge = $0
+                        }
                 }
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                HStack(spacing: PlanColumns.spacing) {
+                    Text(group.displayName)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Group {
+                        Text(budget.money(groupAssigned(group)))
+                            .frame(width: PlanColumns.assigned, alignment: .trailing)
+                        Text(budget.money(groupAvailable(group)))
+                            .frame(width: PlanColumns.available, alignment: .trailing)
+                    }
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                }
             }
+            .padding(.trailing, PlanColumns.trailingInset - 20)
         }
+    }
+
+    private var headingsTrailingGap: CGFloat {
+        guard let list = listTrailingEdge, let headings = headingsTrailingEdge, list > headings else { return 28 }
+        return list - headings
     }
 
     /// Opens the keypad on a category, saving whatever was being typed into another first.
@@ -222,14 +273,22 @@ struct PlanView: View {
         if assignSession?.category.persistentModelID == category.persistentModelID { return }
         // A sum with no answer stays up, its Assign disabled, rather than vanishing unsaved.
         if let open = assignSession, open.calculator.result == nil { return }
-        finishAssigning()
-        withAnimation(.snappy) {
-            assignSession = AssignSession(
-                category: category,
-                month: budget.visibleMonth,
-                shown: budget.state(of: category).assigned,
-                currency: budget.baseCurrency
-            )
+        // Saved before the next is read, so its figure takes in what was just assigned.
+        let wasOpen = assignSession != nil
+        assignSession?.commit(in: modelContext, budget: budget)
+        let next = AssignSession(
+            category: category,
+            month: budget.visibleMonth,
+            shown: budget.state(of: category).assigned,
+            currency: budget.baseCurrency
+        )
+        // Moving to another row keeps the keypad up and changes what it types into. Put away and
+        // brought back in one go, the two animations met, and a half-faded keypad was left on
+        // screen for seconds.
+        if wasOpen {
+            assignSession = next
+        } else {
+            withAnimation(.snappy) { assignSession = next }
         }
     }
 
@@ -305,34 +364,39 @@ struct CategoryRow: View {
     var body: some View {
         // Name, then room for the Assigned field the Plan lays over it, then Available: the order
         // and widths of the headings above, so each figure sits under its own.
+        // Every line is one line, so every row is the same height: a name wrapping to two made its
+        // row, and the Assigned field laid over it, taller than the rest.
         HStack(spacing: PlanColumns.spacing) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(category.displayName)
+                    .font(.callout)
+                    .minimumScaleFactor(0.75)
                 if state.activity != 0 {
                     Text("spent \(budget.money(-state.activity))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
+            .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
             Color.clear.frame(width: PlanColumns.assigned, height: 1)
             VStack(alignment: .trailing, spacing: 2) {
                 Text(budget.money(state.available))
+                    .font(.callout)
                     .monospacedDigit()
                     .foregroundStyle(availableColor)
                 if case let .underfunded(needed) = budget.status(of: category) {
                     Text("\(budget.money(needed)) more needed")
                         .font(.caption2)
                         .foregroundStyle(Flame.glow)
-                        .multilineTextAlignment(.trailing)
                         .accessibilityIdentifier("category-needs-more")
                 }
             }
-            .lineLimit(2)
-            .minimumScaleFactor(0.7)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
             .frame(width: PlanColumns.available, alignment: .trailing)
         }
-        .padding(.vertical, 2)
+        .frame(minHeight: PlanColumns.rowHeight)
         .contentShape(Rectangle())
     }
 
@@ -343,7 +407,14 @@ struct CategoryRow: View {
 
 /// The widths the Plan's figures line up in, row and heading alike.
 enum PlanColumns {
-    static let assigned: CGFloat = 96
-    static let available: CGFloat = 84
-    static let spacing: CGFloat = 8
+    /// $1,234.56 fits both at full size; larger figures shrink rather than wrap.
+    static let assigned: CGFloat = 88
+    static let available: CGFloat = 80
+    static let spacing: CGFloat = 6
+    /// Tall enough for a name with "spent" under it, so rows with and without match.
+    static let rowHeight: CGFloat = 40
+    /// A category row's trailing inset, against a list's own 20.
+    static let trailingInset: CGFloat = 12
+    /// About half the keypad: enough to bring the last row to the middle of what it leaves.
+    static let keypadRoom: CGFloat = 200
 }

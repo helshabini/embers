@@ -17,10 +17,10 @@ struct AssignedField: View {
             .font(.callout.weight(.medium))
             .monospacedDigit()
             .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .frame(maxWidth: .infinity, alignment: .trailing)
+            .minimumScaleFactor(0.6)
+            .padding(.horizontal, 6)
+            // A fixed height: sized to its text, a large figure shrunk to fit made a smaller box.
+            .frame(maxWidth: .infinity, minHeight: 30, maxHeight: 30, alignment: .trailing)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(isEditing ? Flame.ember.opacity(0.15) : Color.secondary.opacity(0.1))
@@ -73,16 +73,16 @@ struct AssignKeypad: View {
 
     @Environment(BudgetModel.self) private var budget
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
-
     var body: some View {
         VStack(spacing: 10) {
             header
-            LazyVGrid(columns: columns, spacing: 8) {
-                digit("7"); digit("8"); digit("9"); op(.divide)
-                digit("4"); digit("5"); digit("6"); op(.multiply)
-                digit("1"); digit("2"); digit("3"); op(.subtract)
-                decimalKey; digit("0"); deleteKey; op(.add)
+            // Not a lazy grid: one builds its rows as they arrive, and sliding up it drew them
+            // squashed over one another for the first frames.
+            Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+                GridRow { digit("7"); digit("8"); digit("9"); op(.divide) }
+                GridRow { digit("4"); digit("5"); digit("6"); op(.multiply) }
+                GridRow { digit("1"); digit("2"); digit("3"); op(.subtract) }
+                GridRow { decimalKey; digit("0"); deleteKey; op(.add) }
             }
             HStack(spacing: 8) {
                 Button(action: onCancel) {
@@ -111,6 +111,8 @@ struct AssignKeypad: View {
         .padding(.top, 12)
         .padding(.bottom, 8)
         .background(.bar)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("assign-keypad")
         // A keypad reads 1-2-3 from the left in every language, as the phone's own does.
         .environment(\.layoutDirection, .leftToRight)
     }
@@ -206,5 +208,49 @@ struct AssignKeypad: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(identifier)
+    }
+}
+
+/// The keypad over the foot of a list, and room under the list to scroll any row clear of it.
+///
+/// Laid over the list rather than set into its safe area. As a safe-area inset its height was
+/// animated along with it: near the end of the plan, the row just scrolled above it was pulled
+/// back under as the inset passed through smaller heights, and the keys arrived in pieces. Here the
+/// list's room is a fixed padding, set at once, and the keypad slides on its own.
+struct AssignKeypadHost: ViewModifier {
+    @Binding var session: AssignSession?
+    let onDone: () -> Void
+
+    /// Measured once it is up; this is close enough for the first frame.
+    @State private var height: CGFloat = 360
+
+    func body(content: Content) -> some View {
+        content
+            .safeAreaPadding(.bottom, session == nil ? 0 : height)
+            .overlay(alignment: .bottom) {
+                if let opened = session {
+                    // Falls back to the session it opened on: while it slides away the session is
+                    // already gone, and a recompute landing then draws it once more.
+                    AssignKeypad(
+                        session: Binding(get: { session ?? opened }, set: { session = $0 }),
+                        onDone: onDone,
+                        onCancel: { withAnimation(.snappy) { session = nil } }
+                    )
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+                    // Slides in solid, as the keyboard does; faded in too, the rows showed through
+                    // it. Faded on the way out: it leaves behind a floating tab bar, and moved alone
+                    // its Assign button showed through below the tabs on the way down.
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .bottom),
+                        removal: .move(edge: .bottom).combined(with: .opacity)
+                    ))
+                }
+            }
+    }
+}
+
+extension View {
+    func assignKeypad(_ session: Binding<AssignSession?>, onDone: @escaping () -> Void) -> some View {
+        modifier(AssignKeypadHost(session: session, onDone: onDone))
     }
 }

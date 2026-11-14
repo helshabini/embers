@@ -120,34 +120,21 @@ struct CategoryDetailView: View {
                     }
                 }
             }
-            .safeAreaInset(edge: .bottom) {
-                if let opened = assignSession {
-                    // Falls back to the session it opened on: while it slides away the session is
-                    // already gone, and a recompute landing then draws it once more.
-                    AssignKeypad(
-                        session: Binding(get: { assignSession ?? opened }, set: { assignSession = $0 }),
-                        onDone: finishAssigning,
-                        onCancel: { withAnimation(.snappy) { assignSession = nil } }
-                    )
-                    .transition(.move(edge: .bottom))
-                }
-            }
+            // Room under the last transaction to scroll it clear of the (+).
+            .contentMargins(.bottom, category.kind == .normal ? 90 : 0, for: .scrollContent)
+            .assignKeypad($assignSession, onDone: finishAssigning)
             .onDisappear(perform: finishAssigning)
             .navigationTitle(category.displayName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
-                // Out of the way while the keypad is up, which takes the foot of the screen.
+            }
+            .overlay(alignment: .bottomTrailing) {
+                // The same (+) as Home and Transactions. Out of the way while the keypad is up,
+                // which takes the foot of the screen.
                 if category.kind == .normal, assignSession == nil {
-                    ToolbarItem(placement: .bottomBar) {
-                        Button {
-                            sheet = .add
-                        } label: {
-                            Label("Add Transaction", systemImage: "plus.circle.fill")
-                                .labelStyle(.titleAndIcon)
-                        }
+                    FloatingAddButton { sheet = .add }
                         .accessibilityIdentifier("category-add-transaction")
-                    }
                 }
             }
             .sheet(item: $sheet) { sheet in

@@ -93,6 +93,7 @@ struct EditPlanView: View {
                 actions: {
                     TextField("Name", text: $newGroupName)
                         .accessibilityIdentifier("new-group-name")
+                        .limitedToPlanName($newGroupName)
                     Button("Cancel", role: .cancel) {}
                     Button("Add") { addGroup() }
                 },
@@ -108,6 +109,7 @@ struct EditPlanView: View {
                 isPresented: .constant(adding != nil),
                 actions: {
                     TextField("Name", text: $newCategoryName)
+                        .limitedToPlanName($newCategoryName)
                     Button("Cancel", role: .cancel) { adding = nil }
                     Button("Add") { addCategory() }
                 },
@@ -117,10 +119,12 @@ struct EditPlanView: View {
                 renaming?.title ?? String(localized: "Rename"),
                 isPresented: .constant(renaming != nil),
                 actions: {
-                    TextField("Name", text: Binding(
+                    let name = Binding(
                         get: { renaming?.name ?? "" },
                         set: { renaming?.name = $0 }
-                    ))
+                    )
+                    TextField("Name", text: name)
+                        .limitedToPlanName(name)
                     Button("Cancel", role: .cancel) { renaming = nil }
                     Button("Rename") { commitRename() }
                 }

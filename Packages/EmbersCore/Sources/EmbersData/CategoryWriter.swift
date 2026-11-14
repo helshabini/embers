@@ -9,6 +9,12 @@ import SwiftData
 /// screen. And the credit card group is not the user's to edit — it follows the accounts.
 @MainActor
 public enum CategoryWriter {
+    /// The longest name a category or group can be given. The Plan keeps every row one line high,
+    /// and on an iPhone 18 Pro the name has about 160 points beside the two figures: 24 characters
+    /// fit, a little shrunk at worst. Names that came in from an import keep their length and are
+    /// cut short on screen.
+    public static let maximumNameLength = 24
+
     public enum Refusal: LocalizedError, Equatable {
         case nameIsEmpty
         case nameAlreadyUsed(String)
@@ -482,6 +488,7 @@ public enum CategoryWriter {
     private static func cleanName(_ name: String) throws -> String {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw Refusal.nameIsEmpty }
-        return trimmed
+        // The fields stop at the limit already; this holds for anything that reaches here otherwise.
+        return String(trimmed.prefix(maximumNameLength)).trimmingCharacters(in: .whitespaces)
     }
 }

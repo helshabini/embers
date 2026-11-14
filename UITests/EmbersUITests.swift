@@ -627,6 +627,76 @@ final class EmbersUITests: XCTestCase {
         wait(for: [XCTNSPredicateExpectation(predicate: restored, object: nil)], timeout: 10)
     }
 
+    /// Every row and every Assigned field the same height, the column headings in sight however far
+    /// down, and the field being typed into clear of the keypad.
+    func testPlanRowsLineUp() {
+        let app = launchApp()
+        app.tabBars.buttons["Plan"].tap()
+        let fields = app.buttons.matching(identifier: "assigned-field")
+        XCTAssertTrue(fields.firstMatch.waitForExistence(timeout: 10))
+        capture(app, "31-plan-top")
+
+        func heights(_ query: XCUIElementQuery) -> Set<Int> {
+            Set(query.allElementsBoundByIndex.filter { $0.isHittable }.map { Int($0.frame.height.rounded()) })
+        }
+        XCTAssertEqual(heights(fields).count, 1, "every Assigned field should be one size: \(heights(fields))")
+        let rows = app.buttons.matching(identifier: "category-row")
+        XCTAssertEqual(heights(rows).count, 1, "every row should be one height: \(heights(rows))")
+
+        let pinned = app.otherElements["plan-pinned-headings"]
+        XCTAssertFalse(pinned.exists, "the headings are in the list at the top")
+        app.swipeUp()
+        app.swipeUp()
+        XCTAssertFalse(app.otherElements["assign-keypad"].exists, "scrolling should not open the keypad")
+        XCTAssertTrue(pinned.waitForExistence(timeout: 3), "scrolled down, the headings should stay in sight")
+        capture(app, "32-plan-scrolled")
+        XCTAssertEqual(heights(fields).count, 1, "further down too: \(heights(fields))")
+        XCTAssertEqual(heights(rows).count, 1, "further down too: \(heights(rows))")
+
+        // The lowest field in sight is the one a keypad rising from the bottom would cover.
+        let lowest = fields.allElementsBoundByIndex.filter { $0.isHittable }.max { $0.frame.minY < $1.frame.minY }!
+        let label = lowest.label
+        lowest.tap()
+        let keypad = app.otherElements["assign-keypad"]
+        XCTAssertTrue(keypad.waitForExistence(timeout: 5))
+        let typed = app.buttons.matching(NSPredicate(format: "identifier == 'assigned-field' AND label == %@", label)).firstMatch
+        let clear = NSPredicate { _, _ in typed.frame.maxY <= keypad.frame.minY && typed.frame.minY >= pinned.frame.maxY }
+        wait(for: [XCTNSPredicateExpectation(predicate: clear, object: nil)], timeout: 5)
+        capture(app, "33-plan-assigning-low-row")
+
+        // Straight on to another row: one keypad, typing into the new one.
+        // One wholly in sight: a field half under the pinned headings takes the tap on them.
+        let other = fields.allElementsBoundByIndex.first {
+            $0.label != label && $0.frame.minY >= pinned.frame.maxY && $0.frame.maxY <= keypad.frame.minY
+        }!
+        let otherLabel = other.label
+        other.tap()
+        let keypads = app.otherElements.matching(identifier: "assign-keypad")
+        let switched = NSPredicate { _, _ in
+            keypads.count == 1 && app.staticTexts[otherLabel.replacingOccurrences(of: "Assigned to ", with: "")].exists
+        }
+        wait(for: [XCTNSPredicateExpectation(predicate: switched, object: nil)], timeout: 5)
+        app.buttons["assign-cancel"].tap()
+        XCTAssertFalse(keypad.waitForExistence(timeout: 2), "cancelling should put the keypad away")
+    }
+
+    /// A name stops at the longest the Plan shows on one line.
+    func testPlanNameStopsAtTheLimit() {
+        let app = launchApp()
+        app.tabBars.buttons["Plan"].tap()
+        app.buttons["edit-plan"].tap()
+        XCTAssertTrue(app.navigationBars["Edit Plan"].waitForExistence(timeout: 10))
+        app.buttons["add-group"].tap()
+        let field = app.alerts.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        // A key at a time, as a person types. Sent as one burst, faster than anyone can type, the
+        // alert's field outran the trim now and then; what is saved is cut to the limit regardless.
+        for character in "Holiday Fund for the Summer of 2027" { field.typeText(String(character)) }
+        XCTAssertEqual(field.value as? String, "Holiday Fund for the Sum")
+        // Cancelled, so the shared budget is left as it was found.
+        app.alerts.buttons["Cancel"].tap()
+    }
+
     /// A category's own screen starts a transaction in that category.
     func testAddATransactionFromACategory() {
         let app = launchApp()
@@ -643,6 +713,7 @@ final class EmbersUITests: XCTestCase {
         }
         XCTAssertTrue(add.exists, "a category should offer to add a transaction")
         let category = app.navigationBars.firstMatch.identifier
+        capture(app, "30-category-add-button")
         add.tap()
         let picker = app.buttons["category-picker"]
         XCTAssertTrue(picker.waitForExistence(timeout: 5))

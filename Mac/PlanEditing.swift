@@ -44,6 +44,7 @@ struct PlanEditing: ViewModifier {
         content
             .alert(nameTitle, isPresented: isAskingForName) {
                 TextField("Name", text: $name)
+                    .limitedToPlanName($name)
                     .accessibilityIdentifier("plan-edit-name")
                 Button("Cancel", role: .cancel) { edit = nil }
                 Button(isRenaming ? String(localized: "Rename") : String(localized: "Add")) { commitName() }

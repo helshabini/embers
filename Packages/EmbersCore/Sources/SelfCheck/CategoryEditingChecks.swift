@@ -40,6 +40,19 @@ func categoryEditingChecks(_ check: Checker) {
             check.expect(group.name, "Annual Bills", "renaming to itself is not a clash")
         }
 
+        check.test("a name stops at the longest the Plan has room for") {
+            let (context, group) = try plan()
+            let long = try CategoryWriter.add("Holiday Fund for the Summer of 2027", to: group, in: context)
+            check.expect(long.name, "Holiday Fund for the Sum")
+            check.expect(long.name.count, CategoryWriter.maximumNameLength)
+            try CategoryWriter.rename(group, to: "Annual Bills and Subscriptions", in: context)
+            check.expect(group.name, "Annual Bills and Subscri")
+            let spaced = try CategoryWriter.add("Children's School Uniform Costs", to: group, in: context)
+            check.expect(spaced.name, "Children's School Unifor")
+            let edge = try CategoryWriter.add("Twenty-three characters and more", to: group, in: context)
+            check.expect(edge.name, "Twenty-three characters", "no space left dangling where it was cut")
+        }
+
         check.test("an unused category can be deleted outright") {
             let (context, group) = try plan()
             let category = try CategoryWriter.add("Mistake", to: group, in: context)
